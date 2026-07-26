@@ -1,0 +1,104 @@
+/* Shared chart shell: hero block, legend, tooltip, empty state. */
+
+.host {
+  position: relative;
+  width: 100%;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+}
+
+.heroRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.hero {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.heroM {
+  font-size: 30px;
+}
+
+.heroSub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.heroStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.heroStatus[data-status='critical'] {
+  background: var(--status-critical-soft);
+  color: var(--status-critical);
+}
+
+.heroStatus[data-status='notable'] {
+  background: var(--status-notable-soft);
+  color: var(--status-notable);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+}
+
+.swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 15;
+  transform: translate(-50%, calc(-100% - 10px));
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  font-size: 11px;
+  line-height: 1.45;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: var(--shadow-pop);
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  min-height: 84px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-muted);
+}

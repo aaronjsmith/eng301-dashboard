@@ -1,0 +1,122 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import type { SourceMeta, StudentRow, SyncStatus } from '../types';
+import { loadDashboardData } from '../data/loadData';
+import { isStale, readCachedData, writeCachedData } from '../data/cache';
+import { runSelfTest } from '../metrics/selftest';
+import { useRole } from './RoleContext';
+
+/**
+ * FR1/FR2 — owns the imported rows and the sync state machine. Raw rows stay
+ * private to this file; consumers read `scopedRows` (faculty views are
+ * row-scoped to their own professor BEFORE anything is computed, FR4).
+ * `baselineRows` is the one sanctioned exception: aggregate comparison
+ * baselines only ("my sections vs. course average") — never rendered as rows.
+ */
+
+interface DataContextValue {
+  scopedRows: StudentRow[];
+  baselineRows: StudentRow[];
+  meta: SourceMeta | null;
+  status: SyncStatus;
+  sync: () => void;
+  loadFromFile: (file: File) => void;
+  /** All professors present in the data (for the faculty picker). */
+  professors: string[];
+  ready: boolean;
+}
+
+const DataContext = createContext<DataContextValue | null>(null);
+
+export function DataProvider({ children }: { children: ReactNode }) {
+  const { role, facultyProfessor } = useRole();
+  const [rows, setRows] = useState<StudentRow[] | null>(null);
+  const [meta, setMeta] = useState<SourceMeta | null>(null);
+  const [status, setStatus] = useState<SyncStatus>({ state: 'idle' });
+  const bootRan = useRef(false);
+  const inFlight = useRef(false);
+
+  const runImport = useCallback(async (mode: SourceMeta['mode'], file?: File) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setStatus((prev) => ({ ...prev, state: 'syncing', error: undefined }));
+    try {
+      const result = await loadDashboardData({ file, mode });
+      setRows(result.rows);
+      setMeta(result.meta);
+      setStatus({ state: 'synced', meta: result.meta });
+      writeCachedData({ rows: result.rows, meta: result.meta });
+      if (import.meta.env.DEV) runSelfTest(result.rows);
+    } catch (error) {
+      // Failed sync keeps the previous data visible — stale-but-labeled.
+      const message = error instanceof Error ? error.message : String(error);
+      setStatus((prev) => ({ ...prev, state: 'error', error: message }));
+    } finally {
+      inFlight.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (bootRan.current) return; // StrictMode double-invoke guard
+    bootRan.current = true;
+
+    const cached = readCachedData();
+    if (cached) {
+      setRows(cached.rows);
+      setMeta(cached.meta);
+      setStatus({ state: 'synced', meta: cached.meta });
+      if (import.meta.env.DEV) runSelfTest(cached.rows);
+      // FR2 staleness: older than 24 h ⇒ re-run the same pipeline on load.
+      if (isStale(cached.meta)) void runImport('auto');
+    } else {
+      void runImport('auto');
+    }
+  }, [runImport]);
+
+  const sync = useCallback(() => void runImport('manual'), [runImport]);
+  const loadFromFile = useCallback(
+    (file: File) => void runImport('file', file),
+    [runImport],
+  );
+
+  const scopedRows = useMemo(() => {
+    if (!rows) return [];
+    if (role === 'faculty') return rows.filter((r) => r.professor === facultyProfessor);
+    return rows;
+  }, [rows, role, facultyProfessor]);
+
+  const professors = useMemo(
+    () => (rows ? [...new Set(rows.map((r) => r.professor))].sort() : []),
+    [rows],
+  );
+
+  const value = useMemo<DataContextValue>(
+    () => ({
+      scopedRows,
+      baselineRows: rows ?? [],
+      meta,
+      status,
+      sync,
+      loadFromFile,
+      professors,
+      ready: rows !== null,
+    }),
+    [scopedRows, rows, meta, status, sync, loadFromFile, professors],
+  );
+
+  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
+}
+
+export function useData(): DataContextValue {
+  const value = useContext(DataContext);
+  if (!value) throw new Error('useData must be used inside <DataProvider>');
+  return value;
+}

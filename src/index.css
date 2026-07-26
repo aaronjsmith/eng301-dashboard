@@ -1,0 +1,139 @@
+:root {
+  /* Accent colors — one per dashboard concept (see wireframe legend) */
+  --accent-presets: #7c3aed;
+  --accent-presets-soft: #f4eefe;
+  --accent-presets-border: #ddcdf8;
+  --accent-highlights: #e4571f;
+  --accent-highlights-soft: #fdf0ea;
+  --accent-highlights-border: #f5cdb8;
+  --accent-module: #2a78d6;
+  --accent-module-soft: #eaf2fc;
+  --accent-module-border: #c4daf4;
+  --accent-sync: #14795d;
+  --accent-sync-hover: #0f6650;
+
+  /* Chart ramp (ordered blue steps, CVD-validated) */
+  --chart-1: #86b6ef;
+  --chart-2: #3987e5;
+  --chart-3: #184f95;
+  --chart-track: #e4edf9;
+  --chart-grid: #e7ebf2;
+  --chart-axis: #c9d1dd;
+
+  /* Heatmap bins — blue sequential, light→dark (<78 / 78–82 / 82–85 / ≥85) */
+  --heat-bin-1: #cde2fb;
+  --heat-bin-2: #86b6ef;
+  --heat-bin-3: #3987e5;
+  --heat-bin-4: #184f95;
+  --heat-ink-dark: #14181f;
+  --heat-ink-light: #ffffff;
+
+  /* Severity / status — meaning only, never decoration (icon + label always) */
+  --status-critical: #d03b3b;
+  --status-critical-soft: #fbeaea;
+  --status-notable: #b97702;
+  --status-notable-fill: #fab219;
+  --status-notable-soft: #fdf3df;
+  --status-context: #8a919c;
+  --status-context-soft: #eef1f6;
+  --status-good: #0ca30c;
+
+  /* Surfaces & ink */
+  --bg-app: #eef1f6;
+  --bg-surface: #ffffff;
+  --bg-inset: #f6f8fb;
+  --text-primary: #14181f;
+  --text-secondary: #4a5361;
+  --text-muted: #767e8a;
+  --border: #dfe4ec;
+
+  --radius: 12px;
+  --radius-sm: 7px;
+  --shadow-card: 0 1px 2px rgb(20 24 31 / 0.06), 0 4px 14px rgb(20 24 31 / 0.07);
+  --shadow-pop: 0 4px 10px rgb(20 24 31 / 0.10), 0 12px 32px rgb(20 24 31 / 0.14);
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Dark theme — the same token contract, second value set (projector/evening). */
+:root[data-theme='dark'] {
+  --accent-presets: #a78bfa;
+  --accent-presets-soft: #2c2440;
+  --accent-presets-border: #4c3d73;
+  --accent-highlights: #f07a45;
+  --accent-highlights-soft: #3a2318;
+  --accent-highlights-border: #6b3d24;
+  --accent-module: #5598e7;
+  --accent-module-soft: #1d2b40;
+  --accent-module-border: #2f4a6e;
+  --accent-sync: #1f9d7b;
+  --accent-sync-hover: #26b58e;
+
+  --chart-1: #9ec5f4;
+  --chart-2: #5598e7;
+  --chart-3: #2a78d6;
+  --chart-track: #232c3d;
+  --chart-grid: #262d3a;
+  --chart-axis: #3a4356;
+
+  --heat-bin-1: #26344c;
+  --heat-bin-2: #1c5cab;
+  --heat-bin-3: #3987e5;
+  --heat-bin-4: #9ec5f4;
+  --heat-ink-dark: #e8ecf3;
+  --heat-ink-light: #10131a;
+
+  --status-critical: #e66767;
+  --status-critical-soft: #3c1f22;
+  --status-notable: #fab219;
+  --status-notable-fill: #fab219;
+  --status-notable-soft: #38300f;
+  --status-context: #8a919c;
+  --status-context-soft: #242a34;
+  --status-good: #34c759;
+
+  --bg-app: #10131a;
+  --bg-surface: #1a1f29;
+  --bg-inset: #151a23;
+  --text-primary: #edf0f5;
+  --text-secondary: #b3bac6;
+  --text-muted: #7d8694;
+  --border: #2c3441;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 4px 14px rgb(0 0 0 / 0.35);
+  --shadow-pop: 0 4px 10px rgb(0 0 0 / 0.45), 0 12px 32px rgb(0 0 0 / 0.5);
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-app);
+}
+
+#root {
+  height: 100vh;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+
+select {
+  font: inherit;
+  color: inherit;
+}
+
+input {
+  font: inherit;
+  color: inherit;
+}

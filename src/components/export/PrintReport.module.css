@@ -1,0 +1,131 @@
+/* Off-screen on screen; @media print (print.css) swaps it in for the app. */
+
+.report {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 660px;
+  padding: 0 10px;
+  background: #ffffff;
+  color: #14181f;
+}
+
+.head {
+  border-bottom: 2px solid #14181f;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #4a5361;
+}
+
+.kpiStrip {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.kpi {
+  flex: 1 1 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+}
+
+.kpiLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #767e8a;
+}
+
+.kpiValue {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.kpiTarget {
+  font-size: 10px;
+  color: #767e8a;
+}
+
+.breach {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid #dfe4ec;
+  border-left: 4px solid var(--status-critical, #d03b3b);
+  border-radius: 8px;
+  break-inside: avoid;
+}
+
+.breachTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sevIcon {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sevIcon[data-severity='critical'] {
+  background: #d03b3b;
+}
+
+.sevIcon[data-severity='notable'] {
+  background: #fab219;
+}
+
+.breachEvidence {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #4a5361;
+}
+
+.breachChart {
+  max-width: 620px;
+}
+
+.chartCaption {
+  margin: 4px 0 0;
+  font-size: 10px;
+  color: #767e8a;
+}
+
+.calm {
+  padding: 14px;
+  border: 1px dashed #dfe4ec;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #4a5361;
+}
+
+.stamp {
+  margin-top: 16px;
+  padding-top: 8px;
+  border-top: 1px solid #dfe4ec;
+  font-size: 9.5px;
+  color: #767e8a;
+}

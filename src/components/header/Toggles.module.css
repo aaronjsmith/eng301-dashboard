@@ -1,0 +1,24 @@
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+.toggle:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+.toggle[data-on='true'] {
+  background: var(--accent-module-soft);
+  border-color: var(--accent-module-border);
+  color: var(--accent-module);
+}

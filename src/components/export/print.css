@@ -1,0 +1,22 @@
+/* FR7 — print stylesheet: hide the app shell, show only the report. */
+
+@page {
+  size: letter;
+  margin: 14mm;
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+  }
+
+  .app-shell {
+    display: none !important;
+  }
+
+  .print-report {
+    position: static !important;
+    left: auto !important;
+    width: auto !important;
+  }
+}

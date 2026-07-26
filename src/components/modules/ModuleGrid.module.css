@@ -1,0 +1,39 @@
+.grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols, 4), minmax(0, 1fr));
+  grid-auto-rows: minmax(250px, auto);
+  gap: 18px;
+  align-items: stretch;
+  align-content: start;
+}
+
+.cell {
+  min-width: 0;
+  position: relative;
+}
+
+/* Target slot highlight while dragging (the card itself dims via data-dragging) */
+.cell[data-target] {
+  outline: 2px dashed var(--accent-module);
+  outline-offset: 3px;
+  border-radius: var(--radius);
+}
+
+/* Parked (magnetic off) cards float above the roster */
+.cell[data-parked] {
+  z-index: 5;
+}
+
+.ghost {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.94;
+  transform: rotate(0.6deg);
+}
+
+.ghost > * {
+  height: 100%;
+  box-shadow: var(--shadow-pop);
+}
