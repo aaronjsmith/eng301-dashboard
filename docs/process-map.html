@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ENG 201 Dashboard — Process Map (Client Brief)</title>
+<style>
+  @page { size: Letter portrait; margin: 11mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Calibri, Roboto, Helvetica, Arial, sans-serif;
+    color: #1b2433;
+    background: #fff;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .page { padding: 6px 8px 18px; max-width: 780px; margin: 0 auto; }
+
+  header.doc {
+    border-bottom: 3px solid #1f4e8c;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+  .eyebrow {
+    font-size: 10px; font-weight: 700; letter-spacing: .8px;
+    text-transform: uppercase; color: #1f4e8c; margin: 0 0 4px;
+  }
+  header.doc h1 { margin: 0; font-size: 20px; color: #122033; letter-spacing: .1px; }
+  header.doc .sub { margin: 5px 0 0; color: #4a5568; font-size: 12px; max-width: 70ch; }
+  header.doc .meta { margin: 6px 0 0; font-size: 10px; color: #7a8496; }
+
+  .pitch {
+    background: #f3f7fc; border: 1px solid #c9d8ec; border-radius: 8px;
+    padding: 9px 12px; margin: 0 0 14px; color: #2a3648; font-size: 11.5px;
+  }
+  .pitch strong { color: #1f4e8c; }
+
+  .stage { margin: 0 0 4px; break-inside: avoid; }
+  .stage-head {
+    display: flex; align-items: baseline; gap: 8px;
+    margin: 13px 0 7px;
+  }
+  .stage-num {
+    flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
+    background: #1f4e8c; color: #fff; font-size: 11px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .stage-title { font-size: 13px; font-weight: 700; color: #1f4e8c; letter-spacing: .2px; }
+  .stage-ask { margin-left: auto; font-size: 10px; color: #7a8496; font-style: italic; max-width: 38ch; text-align: right; }
+
+  .flow {
+    display: flex; align-items: stretch; gap: 5px; flex-wrap: wrap;
+  }
+  .arrow { align-self: center; color: #9aa6b8; font-size: 15px; font-weight: 700; padding: 0 1px; }
+  .down { text-align: center; color: #9aa6b8; font-size: 13px; margin: 3px 0; }
+
+  .card {
+    border: 1.5px solid #cfd8e6; border-radius: 8px; background: #fafbfd;
+    padding: 7px 9px; min-width: 105px; flex: 1 1 120px; max-width: 210px;
+  }
+  .card .t { font-weight: 700; font-size: 11.5px; color: #122033; }
+  .card .d { margin-top: 3px; font-size: 10px; color: #556274; }
+  .card .v { margin-top: 4px; font-size: 9.5px; color: #1f4e8c; font-weight: 600; }
+
+  .card.open   { background: #eef4ff; border-color: #9db5df; }
+  .card.role   { background: #fff6e8; border-color: #e6c48a; }
+  .card.view   { background: #eef9f2; border-color: #95d0ad; }
+  .card.filter { background: #f5f0ff; border-color: #c3b0ea; }
+  .card.insight{ background: #fff0f4; border-color: #e9a8bc; }
+  .card.act    { background: #eef8fb; border-color: #95c9d8; }
+  .card.loop   { background: #fffce8; border-color: #e4d27a; }
+
+  .lane {
+    border: 1px dashed #c9d4e5; border-radius: 9px;
+    padding: 8px 10px; background: #fcfdff; margin-bottom: 2px;
+  }
+  .lane-label {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: #7a8496; margin-bottom: 6px;
+  }
+
+  .scenarios {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    margin-top: 4px; break-inside: avoid;
+  }
+  .scenario {
+    border: 1px solid #d5deeb; border-radius: 8px; padding: 8px 10px;
+    background: #fff;
+  }
+  .scenario h3 {
+    margin: 0 0 4px; font-size: 11.5px; color: #1f4e8c;
+  }
+  .scenario p { margin: 0; font-size: 10px; color: #4a5568; }
+  .scenario .result {
+    margin-top: 5px; font-size: 10px; color: #1a6b3c; font-weight: 600;
+  }
+
+  .outcomes {
+    margin-top: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px;
+    break-inside: avoid;
+  }
+  .outcome {
+    border-top: 3px solid #1f4e8c; background: #f7f9fc;
+    border-radius: 0 0 6px 6px; padding: 8px 9px;
+  }
+  .outcome .t { font-weight: 700; font-size: 11px; }
+  .outcome .d { margin-top: 3px; font-size: 10px; color: #556274; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px 14px;
+    margin-top: 8px; font-size: 9.5px; color: #556274;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .sw { width: 11px; height: 11px; border-radius: 3px; border: 1.5px solid #cfd8e6; }
+  .sw.open{background:#eef4ff;border-color:#9db5df}
+  .sw.role{background:#fff6e8;border-color:#e6c48a}
+  .sw.view{background:#eef9f2;border-color:#95d0ad}
+  .sw.filter{background:#f5f0ff;border-color:#c3b0ea}
+  .sw.insight{background:#fff0f4;border-color:#e9a8bc}
+  .sw.act{background:#eef8fb;border-color:#95c9d8}
+
+  footer.doc {
+    margin-top: 14px; border-top: 1px solid #d5deeb; padding-top: 6px;
+    font-size: 9px; color: #8a93a3;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="doc">
+    <p class="eyebrow">Medina Business Insights · Ensign College</p>
+    <h1>ENG 201 Core Competency Throughput Dashboard</h1>
+    <p class="sub">Process map of the user journey — from opening the dashboard to acting on what the data shows. Written for college leaders, chairs, and faculty. No technical background required.</p>
+    <p class="meta">Companion to the System Design Document · replaces scattered spreadsheets with one shared, visual source of truth</p>
+    <div class="legend">
+      <span><i class="sw open"></i>Open / load</span>
+      <span><i class="sw role"></i>Role path</span>
+      <span><i class="sw view"></i>View &amp; explore</span>
+      <span><i class="sw filter"></i>Filter / focus</span>
+      <span><i class="sw insight"></i>Insight</span>
+      <span><i class="sw act"></i>Act / share</span>
+    </div>
+  </header>
+
+  <div class="pitch">
+    <strong>What this replaces:</strong> Today, leaders pull pass-rate data from separate spreadsheets whenever a question comes up. The data is not standardized, so decisions often rest on gut feeling. <strong>What you get:</strong> one interactive dashboard that turns the college’s student-level course tables into clear KPIs, risk alerts, and equity views — so tutoring and outreach go to the students who need them most.
+  </div>
+
+  <!-- 1 -->
+  <div class="stage">
+    <div class="stage-head">
+      <span class="stage-num">1</span>
+      <span class="stage-title">Open the dashboard</span>
+      <span class="stage-ask">“Where do I start?”</span>
+    </div>
+    <div class="flow">
+      <div class="card open"><div class="t">Launch the dashboard</div><div class="d">Opens in the browser — no new software to install. Works with the tools the college already uses.</div></div>
+      <span class="arrow">→</span>
+      <div class="card open"><div class="t">Data loads automatically</div><div class="d">Validated student records for ENG 101, ENG 201, MAT 110, and MAT 252 appear as one shared dataset.</div><div class="v">Same numbers for every user</div></div>
+      <span class="arrow">→</span>
+      <div class="card open"><div class="t">Ready to explore</div><div class="d">Headline measures, charts, and filters appear together. Refresh or reload when new semester data arrives.</div></div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="stage">
+    <div class="stage-head">
+      <span class="stage-num">2</span>
+      <span class="stage-title">Choose your role path</span>
+      <span class="stage-ask">“What am I allowed — and meant — to see?”</span>
+    </div>
+    <div class="lane">
+      <div class="lane-label">One product, three lenses</div>
+      <div class="flow">
+        <div class="card role"><div class="t">Senior leader / admin</div><div class="d">Big-picture view across all four courses. Spot which gateway courses trail and where equity gaps raise alerts.</div></div>
+        <div class="card role"><div class="t">Program chair</div><div class="d">Cross-course and section awareness. Drill into one course and compare student groups to target support.</div></div>
+        <div class="card role"><div class="t">Faculty</div><div class="d">Own sections only. Compare “my students” against the course average without seeing other instructors’ rosters.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="stage">
+    <div class="stage-head">
+      <span class="stage-num">3</span>
+      <span class="stage-title">Pick the view that matches your question</span>
+      <span class="stage-ask">“How are we doing — overall, by course, or by equity?”</span>
+    </div>
+    <div class="flow">
+      <div class="card view"><div class="t">Overview</div><div class="d">Pass rates for all four courses. Makes the central finding visible: 100-level gateway courses sit below their 200-level successors.</div></div>
+      <div class="card view"><div class="t">Course detail</div><div class="d">One course at a time. Compare paired student groups (1st-gen, Pell, English background, enrollment, residency) against the course rate.</div></div>
+      <div class="card view"><div class="t">Equity / risk</div><div class="d">Gender and other gaps ranked by size. Alerts fire when a gap crosses the five-point threshold (e.g., ENG 101).</div></div>
+      <div class="card view"><div class="t">Presets &amp; highlights</div><div class="d">Ready-made KPI/KRI cards and flagged patterns so leaders do not start from a blank spreadsheet.</div></div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="stage">
+    <div class="stage-head">
+      <span class="stage-num">4</span>
+      <span class="stage-title">Narrow with filters</span>
+      <span class="stage-ask">“Show me first-generation students in ENG 201.”</span>
+    </div>
+    <div class="flow">
+      <div class="card filter"><div class="t">Global filter bar</div><div class="d">Course, session, major, gender, age band, 1st-gen, Pell, English background, residency, enrollment intensity.</div></div>
+      <span class="arrow">→</span>
+      <div class="card filter"><div class="t">Charts &amp; KPIs update live</div><div class="d">Every panel uses the same filtered population — no conflicting numbers between tabs or charts.</div><div class="v">One source of truth</div></div>
+      <span class="arrow">→</span>
+      <div class="card filter"><div class="t">Privacy guardrails</div><div class="d">Very small groups are suppressed so the dashboard stays useful without exposing individual students.</div></div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="stage">
+    <div class="stage-head">
+      <span class="stage-num">5</span>
+      <span class="stage-title">Read the insight</span>
+      <span class="stage-ask">“Where should support go?”</span>
+    </div>
+    <div class="flow">
+      <div class="card insight"><div class="t">Headline KPIs</div><div class="d">Pass rate by course and by student group — progress toward goals, shown the same way for everyone.</div></div>
+      <div class="card insight"><div class="t">KRIs &amp; alerts</div><div class="d">Early warnings when a gap or risk measure crosses its threshold (e.g., gender gap &gt; 5 points).</div></div>
+      <div class="card insight"><div class="t">Highlights &amp; flags</div><div class="d">Surfaces the patterns worth acting on — such as first-generation students in ENG 201 trailing peers by ~12 points.</div></div>
+      <div class="card insight"><div class="t">Drill deeper</div><div class="d">From Overview → one course → groups within it. The loop lets leaders keep asking until they have an answer.</div></div>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="stage">
+    <div class="stage-head">
+      <span class="stage-num">6</span>
+      <span class="stage-title">Share and act</span>
+      <span class="stage-ask">“How do I take this into a meeting?”</span>
+    </div>
+    <div class="flow">
+      <div class="card act"><div class="t">Export current view</div><div class="d">Capture the dashboard exactly as filtered — for budget asks, chair meetings, or student-success huddles.</div></div>
+      <span class="arrow">→</span>
+      <div class="card act"><div class="t">Print a pertinent report</div><div class="d">A clean, stamped report of the measures that matter for that decision.</div></div>
+      <span class="arrow">→</span>
+      <div class="card act"><div class="t">Target support</div><div class="d">Fund tutoring, plan outreach, or schedule interventions where the evidence points — then reopen next term to see if numbers moved.</div><div class="v">Evidence over gut feeling</div></div>
+    </div>
+  </div>
+
+  <!-- Scenarios -->
+  <div class="stage">
+    <div class="stage-head">
+      <span class="stage-num">★</span>
+      <span class="stage-title">How leaders use it</span>
+      <span class="stage-ask">Two minutes to a focused ask</span>
+    </div>
+    <div class="scenarios">
+      <div class="scenario">
+        <h3>Dean of Academics — tutoring budget</h3>
+        <p>Opens Overview and sees ENG 101 and MAT 110 trail the other courses. Switches to Equity and finds ENG 101 flagged with an 11-point gender gap.</p>
+        <div class="result">→ Focused request: fund tutoring for 100-level gateways, with outreach to the students falling behind in ENG 101.</div>
+      </div>
+      <div class="scenario">
+        <h3>English chair — who struggles in ENG 201?</h3>
+        <p>Opens Course Detail, selects ENG 201, and sees first-generation students passing at 77.1% — about twelve points below peers.</p>
+        <div class="result">→ Shares the view with student success; plans early outreach to first-generation students next semester.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Outcomes -->
+  <div class="outcomes">
+    <div class="outcome">
+      <div class="t">One shared truth</div>
+      <div class="d">Every stakeholder sees the same validated numbers, presented the same way — no competing spreadsheet versions.</div>
+    </div>
+    <div class="outcome">
+      <div class="t">Faster decisions</div>
+      <div class="d">From question to evidence in minutes: filter, read the KPI/KRI, export, and walk into the meeting prepared.</div>
+    </div>
+    <div class="outcome">
+      <div class="t">Support where it counts</div>
+      <div class="d">Tutoring and outreach directed at the courses and student groups the data shows need help most.</div>
+    </div>
+  </div>
+
+  <footer class="doc">
+    Medina Business Insights · ENG 201 Core Competency Throughput Dashboard · Process map of the stakeholder journey (open → role → view → filter → insight → act). Descriptive analytics for Ensign College; predictive features remain out of scope for this version.
+  </footer>
+</div>
+</body>
+</html>

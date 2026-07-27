@@ -29,6 +29,8 @@ export type MetricUnit = 'percent' | 'points' | 'count' | 'score';
 export interface MetricDef {
   id: MetricId;
   label: string;
+  /** Plain-English “what is this?” for module help text. */
+  description: string;
   kind: 'kpi' | 'kri';
   indicator: IndicatorKind;
   unit: MetricUnit;
@@ -66,6 +68,8 @@ export const METRICS: Record<MetricId, MetricDef> = {
   passRate: {
     id: 'passRate',
     label: 'Pass rate',
+    description:
+      'What share of students passed. Higher is better. The goal is at least 85 out of every 100 students.',
     kind: 'kpi',
     indicator: 'lagging',
     unit: 'percent',
@@ -79,6 +83,8 @@ export const METRICS: Record<MetricId, MetricDef> = {
   dfwRate: {
     id: 'dfwRate',
     label: 'DFW rate',
+    description:
+      'DFW means D, F, or Withdraw. This is the share of students who did not finish with a C− or better. Lower is better.',
     kind: 'kpi',
     indicator: 'lagging',
     unit: 'percent',
@@ -96,6 +102,8 @@ export const METRICS: Record<MetricId, MetricDef> = {
   avgScore: {
     id: 'avgScore',
     label: 'Average score',
+    description:
+      'The average numeric score for the students you are looking at. The goal is at least 80 (about a B−).',
     kind: 'kpi',
     indicator: 'lagging',
     unit: 'score',
@@ -109,6 +117,8 @@ export const METRICS: Record<MetricId, MetricDef> = {
   enrollment: {
     id: 'enrollment',
     label: 'Enrollment',
+    description:
+      'How many students are in the current view. Use this to see if a group is big enough to trust the other numbers.',
     kind: 'kpi',
     indicator: 'leading',
     unit: 'count',
@@ -121,6 +131,8 @@ export const METRICS: Record<MetricId, MetricDef> = {
   gradeDist: {
     id: 'gradeDist',
     label: 'Grade distribution',
+    description:
+      'How grades are spread from A to F. The big number is the share of A-range grades. Use it to spot unusual grading patterns.',
     kind: 'kpi',
     indicator: 'lagging',
     unit: 'percent',
@@ -133,6 +145,8 @@ export const METRICS: Record<MetricId, MetricDef> = {
   genderGap: {
     id: 'genderGap',
     label: 'Gender score gap (W − M)',
+    description:
+      'Average score for women minus average score for men. A gap larger than 5 points raises a warning that one group is behind.',
     kind: 'kri',
     indicator: 'lagging',
     unit: 'points',
@@ -145,6 +159,8 @@ export const METRICS: Record<MetricId, MetricDef> = {
   firstGenGap: {
     id: 'firstGenGap',
     label: '1st-gen pass gap',
+    description:
+      'How much first-generation students’ pass rate differs from everyone else. Positive means first-gen students are ahead; negative means they are behind.',
     kind: 'kri',
     indicator: 'lagging',
     unit: 'points',
@@ -157,6 +173,8 @@ export const METRICS: Record<MetricId, MetricDef> = {
   pellGap: {
     id: 'pellGap',
     label: 'Pell pass gap',
+    description:
+      'How much Pell Grant students’ pass rate differs from everyone else. Gaps over 5 points mean support may be needed.',
     kind: 'kri',
     indicator: 'lagging',
     unit: 'points',
@@ -169,6 +187,8 @@ export const METRICS: Record<MetricId, MetricDef> = {
   midBandShare: {
     id: 'midBandShare',
     label: 'Mid-band grade share (70–89)',
+    description:
+      'Share of students scoring between 70 and 89. If this is very low, grades may be piled at the extremes (lots of highs and lows).',
     kind: 'kri',
     indicator: 'lagging',
     unit: 'percent',
@@ -182,6 +202,8 @@ export const METRICS: Record<MetricId, MetricDef> = {
   atRisk: {
     id: 'atRisk',
     label: 'At-risk students',
+    description:
+      'How many students look like they may need help soon, based on scores and known risk patterns. Lower is better.',
     kind: 'kri',
     indicator: 'leading',
     unit: 'count',

@@ -55,6 +55,7 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
   const { scopeRows } = useDashboardScope();
   const { data, sanitized } = useModuleChartData(config);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(true);
 
   const def = metricDef(config.metric);
   const patch = (p: Partial<ModuleConfig>) =>
@@ -98,13 +99,27 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
           </svg>
         </button>
         <div className={styles.headText}>
-          <h3 className={styles.title}>{config.title}</h3>
-          <span
-            className={styles.indicator}
-            title={`${def.indicator === 'lagging' ? 'Lagging' : 'Leading'} indicator — a property of the metric`}
+          <div className={styles.titleRow}>
+            <h3 className={styles.title}>{config.title}</h3>
+            <span
+              className={styles.indicator}
+              title={
+                def.indicator === 'lagging'
+                  ? 'Lagging indicator — looks at results that already happened'
+                  : 'Leading indicator — an early warning signal'
+              }
+            >
+              {def.indicator === 'lagging' ? 'Lagging' : 'Leading'}
+            </span>
+          </div>
+          <button
+            type="button"
+            className={styles.helpToggle}
+            aria-expanded={helpOpen}
+            onClick={() => setHelpOpen((v) => !v)}
           >
-            {def.indicator === 'lagging' ? 'Lag' : 'Lead'}
-          </span>
+            {helpOpen ? 'Hide what this means' : 'What does this mean?'}
+          </button>
         </div>
         <div className={styles.headActions}>
           <div className={styles.filterWrap}>
@@ -164,6 +179,8 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
           </button>
         </div>
       </header>
+
+      {helpOpen && <p className={styles.helpBody}>{def.description}</p>}
 
       {!isInvestigate && size !== 'S' && (
         <div className={styles.controls}>

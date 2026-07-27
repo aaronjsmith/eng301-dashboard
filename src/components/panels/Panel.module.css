@@ -31,6 +31,44 @@
   color: var(--text-muted);
 }
 
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 10px;
+  padding: 3px;
+  background: var(--bg-app);
+  border-radius: 10px;
+}
+
+.tab,
+.tabActive {
+  padding: 7px 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tabActive {
+  background: var(--bg-surface);
+  color: var(--panel-accent);
+  box-shadow: var(--shadow-card);
+}
+
+.tabHint {
+  margin: 0 0 10px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
 .list {
   display: flex;
   flex-direction: column;
@@ -42,24 +80,36 @@
 
 /* ── Preset rows ── */
 
-.presetRow {
+.presetButton {
+  display: block;
+  width: 100%;
+  text-align: left;
   padding: 9px 12px 10px;
   border: 1px solid var(--panel-soft-border);
   border-radius: var(--radius-sm);
   background: var(--panel-soft);
+  cursor: pointer;
+  transition: border-color 100ms ease, box-shadow 100ms ease;
+}
+
+.presetButton:hover {
+  border-color: var(--panel-accent);
+  box-shadow: var(--shadow-card);
 }
 
 .presetTop {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
 
 .presetLabel {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
+  line-height: 1.35;
   color: var(--text-secondary);
+  white-space: normal;
 }
 
 .presetValueRow {
@@ -79,7 +129,16 @@
 .presetDetail {
   margin: 3px 0 0;
   font-size: 11px;
+  line-height: 1.4;
   color: var(--text-muted);
+}
+
+.presetAction {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--panel-accent);
 }
 
 .breach {
@@ -245,6 +304,8 @@
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.35;
+  white-space: normal;
+  overflow: visible;
 }
 
 .evidence {

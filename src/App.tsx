@@ -5,8 +5,7 @@ import { ExportButton, type ExportMode } from './components/header/ExportButton'
 import { LoadFileButton } from './components/header/LoadFileButton';
 import { MagneticToggle, ThemeToggle } from './components/header/Toggles';
 import { GlobalFilterBar } from './components/filters/GlobalFilterBar';
-import { PresetsPanel } from './components/panels/PresetsPanel';
-import { HighlightsPanel } from './components/panels/HighlightsPanel';
+import { InsightsPanel } from './components/panels/InsightsPanel';
 import { ModuleGrid } from './components/modules/ModuleGrid';
 import { StatusBar } from './components/StatusBar';
 import { PrintReport } from './components/export/PrintReport';
@@ -74,8 +73,7 @@ export default function App() {
 
         <main className={styles.body} ref={bodyRef}>
           <aside className={styles.sidebar}>
-            <PresetsPanel />
-            <HighlightsPanel />
+            <InsightsPanel />
           </aside>
           <ModuleGrid />
         </main>
