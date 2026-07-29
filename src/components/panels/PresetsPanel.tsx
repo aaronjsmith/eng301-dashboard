@@ -56,10 +56,10 @@ export function PresetsPanel() {
   };
 
   return (
-    <section className={styles.panel} style={accent} aria-label="Presets">
-      <p className={styles.kicker}>Unique module</p>
-      <h2 className={styles.title}>Presets</h2>
-      <p className={styles.caption}>Click a preset to open it as a card</p>
+    <section className={styles.panel} style={accent} aria-label="Key numbers">
+      <p className={styles.kicker}>Start here</p>
+      <h2 className={styles.title}>Key numbers</h2>
+      <p className={styles.caption}>Click one to open a chart about it</p>
       <ul className={styles.list}>
         {panel.map((preset) => (
           <li key={preset.id}>
@@ -67,7 +67,7 @@ export function PresetsPanel() {
               content={{
                 title: preset.label,
                 body: preset.description,
-                note: 'Click to open as a card',
+                note: 'Click to open a chart',
               }}
             >
               <button
@@ -77,7 +77,9 @@ export function PresetsPanel() {
               >
                 <span className={styles.presetLabel}>{preset.label}</span>
                 <span className={styles.presetValue}>{preset.formatted}</span>
-                <span className={styles.tag}>{preset.kind}</span>
+                <span className={styles.tag}>
+                  {preset.kind === 'kpi' ? 'Goal' : 'Warning'}
+                </span>
               </button>
             </Tip>
           </li>

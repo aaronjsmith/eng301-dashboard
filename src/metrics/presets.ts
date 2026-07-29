@@ -42,10 +42,10 @@ function buildPresets(
     metric: 'passRate',
     value: k1?.rate ?? null,
     formatted: k1 ? percent1(k1.rate) : '—',
-    detail: k1 ? `${k1.passed}/${k1.n} students` : 'No data in scope',
+    detail: k1 ? `${k1.passed} of ${k1.n} students passed` : 'No students in this view',
     target: '≥ 85%',
     description:
-      'KPI — share of students in the current scope who passed the course. Target ≥ 85%.',
+      'What share of students passed. Goal: at least 85%. Click to open a chart.',
     breach:
       k1 && k1.rate < THRESHOLDS.passRateTarget
         ? { severity: 'notable', formattedDelta: signedPoints(k1.rate - THRESHOLDS.passRateTarget) }
@@ -61,10 +61,10 @@ function buildPresets(
     metric: 'avgScore',
     value: k2,
     formatted: k2 !== null ? score1(k2) : '—',
-    detail: 'Mean of Score, letter distribution alongside',
+    detail: 'Average numeric score for students in this view',
     target: '≥ 80 (B−)',
     description:
-      'KPI — mean numeric score (0–100) across students in scope. Target ≥ 80, roughly a B−.',
+      'Average score from 0 to 100. Goal: at least 80 (about a B−). Click to open a chart.',
     breach:
       k2 !== null && k2 < THRESHOLDS.avgScoreTarget
         ? { severity: 'notable', formattedDelta: signedPoints(k2 - THRESHOLDS.avgScoreTarget) }
@@ -75,7 +75,7 @@ function buildPresets(
   const k3 = dfwByLevel(levelRows);
   presets.push({
     id: 'K3',
-    label: 'Gateway DFW (100 vs 200 level)',
+    label: 'DFW: 100-level vs 200-level',
     kind: 'kpi',
     metric: 'dfwRate',
     value: k3.gap,
@@ -83,10 +83,10 @@ function buildPresets(
       k3.level100 && k3.level200
         ? `${percent1(k3.level100.rate)} vs ${percent1(k3.level200.rate)}`
         : '—',
-    detail: 'All courses — 100-level vs 200-level',
+    detail: 'DFW means D, F, or Withdraw — compares intro vs higher courses',
     target: 'Within 3 pts',
     description:
-      'KPI — DFW (D, F, or Withdrawal) rate of 100-level vs 200-level gateway courses. Always cross-course: it ignores the course filter. Target: levels within 3 pts.',
+      'Compares how often intro (100-level) vs higher (200-level) courses end in D, F, or withdraw. Goal: the two rates stay within 3 points.',
     breach:
       k3.gap !== null && k3.gap > THRESHOLDS.levelGapMax
         ? { severity: 'notable', formattedDelta: signedPoints(k3.gap) }
@@ -105,7 +105,7 @@ function buildPresets(
     detail: k4.map((s) => `${s.session.slice(0, 2)} ${s.n}`).join(' · '),
     target: 'Stable or growing',
     description:
-      'KPI — total enrollment in the current scope, broken out by session. Target: stable or growing term over term.',
+      'How many students are enrolled, split by term (Spring, Summer, Fall, Winter). Goal: stay steady or grow.',
   });
 
   // R1 — gender performance gap, per professor (worst |gap| in scope)
@@ -124,11 +124,11 @@ function buildPresets(
     value: r1Worst ? r1Worst.gap!.gap : null,
     formatted: r1Worst ? signedPoints(r1Worst.gap!.gap) : '—',
     detail: r1Worst
-      ? `${r1Worst.prof}: W ${score1(r1Worst.gap!.fMean)} vs M ${score1(r1Worst.gap!.mMean)}`
-      : 'Cells under n = 20 suppressed',
-    target: '|gap| ≤ 5 pts',
+      ? `${r1Worst.prof}: women ${score1(r1Worst.gap!.fMean)} vs men ${score1(r1Worst.gap!.mMean)}`
+      : 'Groups under 20 students are hidden for privacy',
+    target: 'Gap ≤ 5 pts',
     description:
-      'KRI — the worst per-professor gap between women’s and men’s average scores (groups under 20 students excluded). Target: gap within 5 pts.',
+      'Biggest gap between women’s and men’s average scores for any professor (tiny groups hidden). Goal: gap of 5 points or less.',
     breach:
       r1Worst && Math.abs(r1Worst.gap!.gap) > THRESHOLDS.equityGapMax
         ? { severity: 'critical', formattedDelta: signedPoints(r1Worst.gap!.gap) }
@@ -149,17 +149,17 @@ function buildPresets(
     r2Spread !== null && r2Spread.spread > THRESHOLDS.professorSpreadMax;
   presets.push({
     id: 'R2',
-    label: 'Grade-distribution anomaly',
+    label: 'Uneven grade pattern',
     kind: 'kri',
     metric: 'midBandShare',
     value: r2Worst ? r2Worst.mid! : null,
-    formatted: r2Worst ? `${percent1(r2Worst.mid!)} mid-band` : '—',
+    formatted: r2Worst ? `${percent1(r2Worst.mid!)} mid scores` : '—',
     detail: r2Worst
-      ? `${r2Worst.prof} in 70–89 band (healthy 60–75%)`
-      : 'Cells under n = 20 suppressed',
-    target: 'Mid-band ≥ 25% · spread ≤ 15 pts',
+      ? `${r2Worst.prof}: share scoring 70–89 (healthy is often 60–75%)`
+      : 'Groups under 20 students are hidden for privacy',
+    target: 'Mid scores ≥ 25% · spread ≤ 15 pts',
     description:
-      'KRI — grading-shape anomaly: the professor with the fewest grades in the 70–89 band, plus the pass-rate spread across professors. Targets: mid-band ≥ 25%, spread ≤ 15 pts.',
+      'Flags odd grading shapes — few middle scores (70–89), or professors with very different pass rates. Goal: enough middle scores, and professors not more than 15 points apart.',
     breach:
       r2MidBreach || r2SpreadBreach
         ? {
@@ -178,7 +178,7 @@ function buildPresets(
     (r3.scoreGap !== null && r3.scoreGap >= THRESHOLDS.equityGapMax);
   presets.push({
     id: 'R3',
-    label: 'Age × session risk (18–21 Summer)',
+    label: 'Young students in Summer',
     kind: 'kri',
     metric: 'passRate',
     value: r3.passGap,
@@ -189,10 +189,10 @@ function buildPresets(
     detail:
       r3.cellScore !== null && r3.otherScore !== null
         ? `Scores ${score1(r3.cellScore)} vs ${score1(r3.otherScore)}`
-        : 'No 18–21 Summer students in scope',
+        : 'No 18–21 Summer students in this view',
     target: 'Gap < 5 pts',
     description:
-      'KRI — pass rate of 18–21-year-olds taking Summer sessions vs everyone else, a known risk cell. Target: gap under 5 pts.',
+      'Compares 18–21-year-olds in Summer with everyone else. This mix is a known risk. Goal: gap under 5 points.',
     breach: r3Breached
       ? { severity: 'critical', formattedDelta: signedPoints(-(r3.passGap ?? 0)) }
       : undefined,
@@ -206,18 +206,18 @@ function buildPresets(
     (pell !== null && Math.abs(pell.gap) > THRESHOLDS.equityGapMax);
   presets.push({
     id: 'R4',
-    label: '1st-gen / Pell pass gap',
+    label: 'First-gen / Pell pass gap',
     kind: 'kri',
     metric: 'firstGenGap',
     value: firstGen?.gap ?? null,
     formatted: firstGen ? signedPoints(firstGen.gap) : '—',
     detail:
       firstGen && pell
-        ? `1st gen ${percent1(firstGen.group.rate)} vs ${percent1(firstGen.comparison.rate)} · Pell ${signedPoints(pell.gap)}`
-        : 'Insufficient data in scope',
-    target: '|gap| ≤ 5 pts',
+        ? `First-gen ${percent1(firstGen.group.rate)} vs others ${percent1(firstGen.comparison.rate)} · Pell ${signedPoints(pell.gap)}`
+        : 'Not enough data in this view',
+    target: 'Gap ≤ 5 pts',
     description:
-      'KRI — pass-rate gaps for first-generation and Pell-eligible (need-based aid) students vs their comparison groups. Visible to chair/admin only (FERPA small cells). Target: gaps within 5 pts.',
+      'Pass-rate gaps for first-generation students and Pell Grant students vs everyone else. Shown to chairs and admins. Goal: gaps of 5 points or less.',
     roles: ['chair', 'admin'],
     breach: r4Breached
       ? {
@@ -235,7 +235,7 @@ function buildPresets(
   const k5 = intensityGap(scopeRows);
   presets.push({
     id: 'K5',
-    label: 'Completion by intensity',
+    label: 'Full-time vs part-time pass',
     kind: 'kpi',
     metric: 'passRate',
     value: k5.gap,
@@ -244,9 +244,9 @@ function buildPresets(
         ? `${percent1(k5.full.rate)} vs ${percent1(k5.part.rate)}`
         : '—',
     detail: 'Full-time vs part-time pass rate',
-    target: '|gap| ≤ 5 pts',
+    target: 'Gap ≤ 5 pts',
     description:
-      'KPI — pass rate of full-time vs part-time students. Computed off-panel; surfaces as an alert on breach. Target: gap within 5 pts.',
+      'Compares pass rates for full-time vs part-time students. Shown as an alert if the gap gets large. Goal: within 5 points.',
     offPanel: true,
     breach:
       k5.gap !== null && Math.abs(k5.gap) > THRESHOLDS.equityGapMax

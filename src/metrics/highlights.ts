@@ -45,8 +45,8 @@ const RULES: HighlightRule[] = [
       if (!breached) return null;
       return {
         id: 'hl-summer-young',
-        label: 'Young summer students are failing at a multiple of the course rate',
-        evidence: `18–21 × Summer pass ${percent1(r3.cellPass.rate)} vs ${percent1(r3.otherPass.rate)} for everyone else (scores ${r3.cellScore !== null ? score1(r3.cellScore) : '—'} vs ${r3.otherScore !== null ? score1(r3.otherScore) : '—'}). It is the combination — not age or summer alone.`,
+        label: 'Young Summer students are failing much more often',
+        evidence: `Ages 18–21 in Summer pass ${percent1(r3.cellPass.rate)}, vs ${percent1(r3.otherPass.rate)} for everyone else (scores ${r3.cellScore !== null ? score1(r3.cellScore) : '—'} vs ${r3.otherScore !== null ? score1(r3.otherScore) : '—'}). The problem is the mix of young + Summer — not age or Summer alone.`,
         severity: 'critical',
         category: 'session',
         roles: ['faculty', 'chair', 'admin'],
@@ -78,7 +78,7 @@ const RULES: HighlightRule[] = [
       return {
         id: 'hl-prof-gender-gap',
         label: `${worst.prof} has a hidden gender gap`,
-        evidence: `Mean score women ${score1(worst.g!.fMean)} vs men ${score1(worst.g!.mMean)} (${signedPoints(worst.g!.gap)} pts, threshold 5). Hidden because the course-wide gender pass gap is only ${courseWide ? signedPoints(courseWide.gap) : '—'} pts — the professor split exposes it.`,
+        evidence: `Women average ${score1(worst.g!.fMean)} and men average ${score1(worst.g!.mMean)} (${signedPoints(worst.g!.gap)} points; warn above 5). Easy to miss because the whole-course gap is only ${courseWide ? signedPoints(courseWide.gap) : '—'} points — looking by professor shows it.`,
         severity: 'critical',
         category: 'instructor',
         roles: ['chair', 'admin'],
@@ -88,7 +88,7 @@ const RULES: HighlightRule[] = [
           metric: 'genderGap',
           slice: { professor: [worst.prof] },
           baseline: {},
-          baselineLabel: 'All professors in scope',
+          baselineLabel: 'All professors in this view',
         },
       };
     },
@@ -107,8 +107,8 @@ const RULES: HighlightRule[] = [
         allFails.length > 0 ? Math.round((profFails.length / allFails.length) * 100) : 0;
       return {
         id: 'hl-prof-bimodal',
-        label: `${worst.prof} grades all-or-nothing`,
-        evidence: `${percent1(worst.mid!)} of grades in the 70–89 band (healthy ≈ 70%) with a normal-looking ${worst.pr ? percent1(worst.pr.rate) : '—'} pass rate. Across all courses, ${worst.prof}'s sections produce ${profFails.length} of ${allFails.length} fails (${failShare}%).`,
+        label: `${worst.prof} grades with almost no middle scores`,
+        evidence: `Only ${percent1(worst.mid!)} of grades are in the 70–89 middle range (healthy is often around 70%), even though the pass rate looks normal at ${worst.pr ? percent1(worst.pr.rate) : '—'}. Across all courses, ${worst.prof}'s sections account for ${profFails.length} of ${allFails.length} fails (${failShare}%).`,
         severity: 'critical',
         category: 'instructor',
         roles: ['chair', 'admin'],
@@ -118,7 +118,7 @@ const RULES: HighlightRule[] = [
           metric: 'midBandShare',
           slice: { professor: [worst.prof] },
           baseline: {},
-          baselineLabel: 'All professors in scope',
+          baselineLabel: 'All professors in this view',
         },
       };
     },
@@ -133,7 +133,7 @@ const RULES: HighlightRule[] = [
       return {
         id: 'hl-first-gen',
         label: `First-generation students trail by ${Math.abs(gap.gap).toFixed(0)} points`,
-        evidence: `1st-gen pass ${percent1(gap.group.rate)} vs continuing-gen ${percent1(gap.comparison.rate)} (${signedPoints(gap.gap)} pts, threshold 5). Present in the base data, not a simulated scenario.`,
+        evidence: `First-gen students pass at ${percent1(gap.group.rate)} vs ${percent1(gap.comparison.rate)} for others (${signedPoints(gap.gap)} points; warn above 5).`,
         severity: 'critical',
         category: 'equity',
         roles: ['chair', 'admin'],
@@ -143,7 +143,7 @@ const RULES: HighlightRule[] = [
           metric: 'passRate',
           slice: { firstGen: ['Yes'] },
           baseline: { firstGen: ['No'] },
-          baselineLabel: 'Continuing-generation students',
+          baselineLabel: 'Students who are not first-gen',
         },
       };
     },
@@ -162,8 +162,8 @@ const RULES: HighlightRule[] = [
       if (spread < 10) return null;
       return {
         id: 'hl-session-spread',
-        label: `Session outcomes spread ${spread.toFixed(0)} pts`,
-        evidence: `${best.session} ${percent1(best.pr!.rate)} vs ${worstS.session} ${percent1(worstS.pr!.rate)} — ${worstS.session} is low even excluding the 18–21 cohort.`,
+        label: `Terms differ by ${spread.toFixed(0)} points`,
+        evidence: `${best.session} passes at ${percent1(best.pr!.rate)} vs ${worstS.session} at ${percent1(worstS.pr!.rate)}. ${worstS.session} stays low even when you look past the youngest students.`,
         severity: 'notable',
         category: 'session',
         roles: ['faculty', 'chair', 'admin'],
@@ -193,8 +193,8 @@ const RULES: HighlightRule[] = [
       );
       return {
         id: 'hl-course-gender-gap',
-        label: `${worst.course} gender pass gap is ${signedPoints(worst.g!.gap)} pts`,
-        evidence: `Women ${percent1(worst.g!.f.rate)} vs men ${percent1(worst.g!.m.rate)} — the course-level twin of the professor finding (cross-course).`,
+        label: `${worst.course}: women and men pass at very different rates`,
+        evidence: `Women pass at ${percent1(worst.g!.f.rate)} vs men at ${percent1(worst.g!.m.rate)} (${signedPoints(worst.g!.gap)} points).`,
         severity: 'notable',
         category: 'equity',
         roles: ['chair', 'admin'],
@@ -218,8 +218,8 @@ const RULES: HighlightRule[] = [
       }
       return {
         id: 'hl-non-native',
-        label: `Non-native speakers trail ${Math.abs(gap.gap).toFixed(1)} pts`,
-        evidence: `Non-native pass ${percent1(gap.group.rate)} vs native ${percent1(gap.comparison.rate)} — just past the 5-pt equity threshold.`,
+        label: `Non-native English speakers trail by ${Math.abs(gap.gap).toFixed(1)} points`,
+        evidence: `Non-native speakers pass at ${percent1(gap.group.rate)} vs native speakers at ${percent1(gap.comparison.rate)} — past the 5-point warning line.`,
         severity: 'notable',
         category: 'equity',
         roles: ['chair', 'admin'],
@@ -246,8 +246,8 @@ const RULES: HighlightRule[] = [
       if (best.pr!.rate - worst.pr!.rate <= THRESHOLDS.equityGapMax) return null;
       return {
         id: 'hl-major-gap',
-        label: `${worst.major} majors underperform`,
-        evidence: `${worst.major} ${percent1(worst.pr!.rate)} (n=${worst.pr!.n}) vs ${best.major} ${percent1(best.pr!.rate)} (n=${best.pr!.n}) — a service-course fit question.`,
+        label: `${worst.major} majors pass less often`,
+        evidence: `${worst.major} majors pass at ${percent1(worst.pr!.rate)} (${worst.pr!.n} students) vs ${best.major} at ${percent1(best.pr!.rate)} (${best.pr!.n} students).`,
         severity: 'notable',
         category: 'course',
         roles: ['faculty', 'chair', 'admin'],
@@ -270,8 +270,8 @@ const RULES: HighlightRule[] = [
       if (failing === null || passing === null || passing - failing < 2) return null;
       return {
         id: 'hl-age-fail',
-        label: 'Failing students are markedly younger',
-        evidence: `Mean age of failing students ${score1(failing)} vs ${score1(passing)} for passing — age is a general risk marker beyond the summer effect.`,
+        label: 'Students who fail are often younger',
+        evidence: `Average age of failing students is ${score1(failing)} vs ${score1(passing)} for students who pass — age is a risk signal beyond Summer alone.`,
         severity: 'notable',
         category: 'session',
         roles: ['faculty', 'chair', 'admin'],
@@ -311,8 +311,8 @@ const RULES: HighlightRule[] = [
       const best = healthy.reduce((a, b) => (b.pr!.rate > a.pr!.rate ? b : a));
       return {
         id: 'hl-benchmark-prof',
-        label: `${best.prof} is the healthy benchmark`,
-        evidence: `${percent1(best.pr!.rate)} pass, no gender gap (${signedPoints(best.g!.gap)}), normal grade spread (${percent1(best.mid!)} mid-band). Use as the comparison baseline in professor-level charts.`,
+        label: `${best.prof} looks like a healthy example`,
+        evidence: `${percent1(best.pr!.rate)} pass, small gender gap (${signedPoints(best.g!.gap)}), and a normal middle-score share (${percent1(best.mid!)}). A good comparison for other professors.`,
         severity: 'context',
         category: 'instructor',
         roles: ['chair', 'admin'],
@@ -330,8 +330,8 @@ const RULES: HighlightRule[] = [
       const worst = groups.reduce((a, b) => (b.pr!.rate < a.pr!.rate ? b : a));
       return {
         id: 'hl-weakest-gateway',
-        label: `${worst.course} is the weakest gateway`,
-        evidence: `${percent1(worst.pr!.rate)} pass — lowest of the ${groups.length} courses (cross-course). Feeds the gateway DFW preset.`,
+        label: `${worst.course} has the lowest pass rate`,
+        evidence: `${percent1(worst.pr!.rate)} pass — lowest of the ${groups.length} courses shown.`,
         severity: 'context',
         category: 'course',
         roles: ['faculty', 'chair', 'admin'],
@@ -349,8 +349,8 @@ const RULES: HighlightRule[] = [
       const worst = small.reduce((a, b) => (b.n < a.n ? b : a));
       return {
         id: 'hl-small-cell',
-        label: `${worst.major} majors: cell too small to report`,
-        evidence: `n = ${worst.n} (< ${SMALL_CELL}) — suppressed under the FERPA re-identification rule; shown to admin as an aggregate footnote only.`,
+        label: `${worst.major} majors: too few to show`,
+        evidence: `Only ${worst.n} students (under ${SMALL_CELL}) — hidden so no one can guess who they are. Admins still see this note.`,
         severity: 'context',
         category: 'equity',
         roles: ['admin'],

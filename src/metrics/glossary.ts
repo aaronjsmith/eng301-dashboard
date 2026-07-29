@@ -1,33 +1,33 @@
 import type { TipContent } from '../components/ui/Tip';
 
-/** Cross-cutting terms and abbreviations the hover tooltips reuse. */
+/** Simple definitions shown in hover tips. Written for a high-school reader. */
 export const GLOSSARY = {
   kpi: {
-    title: 'KPI — Key Performance Indicator',
-    body: 'Measures progress toward a goal (pass rate, average score, enrollment). You want KPIs to hit their targets.',
+    title: 'Goal number',
+    body: 'A score that shows how well students are doing. Higher (or hitting the goal) is good.',
   },
   kri: {
-    title: 'KRI — Key Risk Indicator',
-    body: 'Early warning of an emerging problem (equity gaps, grading anomalies, at-risk counts). You want KRIs to stay quiet.',
+    title: 'Warning number',
+    body: 'A score that flags a problem early — like a big gap between groups. You want these to stay small or quiet.',
   },
   lagging: {
-    title: 'Lagging indicator',
-    body: 'Reports outcomes after the fact — it confirms what already happened. A property of the metric, not something you set.',
+    title: 'After-the-fact number',
+    body: 'Looks at results that already happened (like final pass rates). It tells you what finished, not what is coming next.',
   },
   leading: {
-    title: 'Leading indicator',
-    body: 'Signals likely future outcomes — it moves before final results do. A property of the metric, not something you set.',
+    title: 'Early warning number',
+    body: 'Moves before final grades are locked in. Use it to spot trouble early.',
   },
   smallCell: {
-    title: 'n < 20 suppression',
-    body: 'Groups smaller than 20 students are suppressed to prevent re-identification (FERPA privacy rule).',
+    title: 'Too few students to show',
+    body: 'If a group has fewer than 20 students, we hide the number so no one can guess who the students are.',
   },
   moduleFilter: {
-    title: 'Module filters',
-    body: 'Narrow this card further within the global scope. They compose on top of the global filter bar and never widen it.',
+    title: 'Card filter',
+    body: 'Narrows only this card. It cannot show more students than the filters at the top of the page.',
   },
   globalScope: {
-    title: 'Global scope',
-    body: 'The population every panel computes against. Module filters narrow within it; presets and alerts read it directly.',
+    title: 'Who you are looking at',
+    body: 'The students included by the filters at the top. Every chart and key number uses this same group.',
   },
 } as const satisfies Record<string, TipContent>;

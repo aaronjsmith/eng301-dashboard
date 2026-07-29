@@ -53,7 +53,7 @@ export function AddModuleSlot() {
       type: 'add-module',
       config: {
         id: freshId('mod'),
-        title: 'New module',
+        title: 'New chart',
         metric: 'passRate',
         chartType: 'donut',
         size: 'S',
@@ -85,16 +85,16 @@ export function AddModuleSlot() {
         <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
           <path d="M14 5v18M5 14h18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
         </svg>
-        New module
+        New chart
       </button>
 
       {open && (
-        <div className={styles.menu} role="menu" aria-label="Add module">
+        <div className={styles.menu} role="menu" aria-label="Add a chart">
           <button type="button" role="menuitem" className={styles.item} onClick={addBlank}>
-            <span className={styles.itemTitle}>Blank module</span>
-            <span className={styles.itemSub}>Pass-rate donut — configure from there</span>
+            <span className={styles.itemTitle}>Blank chart</span>
+            <span className={styles.itemSub}>Starts as a pass-rate chart — change it from there</span>
           </button>
-          <p className={styles.menuHeading}>Starting layouts</p>
+          <p className={styles.menuHeading}>Ready-made layouts</p>
           {bundles.map((bundle) => {
             const isExpanded = expanded === bundle.id;
             const visibleModules = bundle.modules.filter(

@@ -105,7 +105,7 @@ export function FilterPopup({ scopeRows, filters, onApply, onClose }: FilterPopu
               </legend>
               {allSmall ? (
                 <p className={styles.aggregateOnly}>
-                  Aggregate only — every value is under n = {SMALL_CELL}
+                  Too few students to show — every group is under {SMALL_CELL}
                 </p>
               ) : (
                 values.map((value) => {
@@ -136,7 +136,7 @@ export function FilterPopup({ scopeRows, filters, onApply, onClose }: FilterPopu
       </div>
       <div className={styles.footer}>
         <button type="button" className={styles.reset} onClick={() => setDraft({})}>
-          Reset to preset default
+          Clear filters
         </button>
         <button
           type="button"

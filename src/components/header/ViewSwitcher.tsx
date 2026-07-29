@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRole } from '../../context/RoleContext';
 import { useData } from '../../context/DataContext';
+import { useWorkspace } from '../../context/WorkspaceContext';
 import { ROLE_OPTIONS } from '../../types';
 import styles from './ViewSwitcher.module.css';
 
@@ -12,6 +13,7 @@ import styles from './ViewSwitcher.module.css';
 export function ViewSwitcher() {
   const { role, setRole, facultyProfessor, setFacultyProfessor } = useRole();
   const { professors } = useData();
+  const { dispatch } = useWorkspace();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +36,7 @@ export function ViewSwitcher() {
           <select
             value={facultyProfessor}
             onChange={(e) => setFacultyProfessor(e.target.value)}
-            aria-label="Faculty professor"
+            aria-label="Which teacher you are viewing as"
           >
             {professors.map((p) => (
               <option key={p} value={p}>
@@ -89,6 +91,16 @@ export function ViewSwitcher() {
           </ul>
         )}
       </div>
+
+      <button
+        type="button"
+        className={styles.reset}
+        aria-label="Reset layout and filters"
+        title="Reset layout and filters"
+        onClick={() => dispatch({ type: 'reset-layout' })}
+      >
+        Reset
+      </button>
     </div>
   );
 }

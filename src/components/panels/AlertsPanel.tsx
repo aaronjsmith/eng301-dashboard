@@ -28,7 +28,7 @@ export function AlertsPanel() {
       type: 'add-module',
       config: {
         id,
-        title: `Investigate: ${h.label}`,
+        title: `Look closer: ${h.label}`,
         metric: h.investigate.metric,
         chartType: metricDef(h.investigate.metric).defaultChart,
         size: 'L',
@@ -45,8 +45,8 @@ export function AlertsPanel() {
     <section className={styles.alerts} aria-label="Critical alerts">
       <Tip
         content={{
-          title: 'Critical alerts',
-          body: 'Cases in the current data that need attention now. Click to fold the list open or closed.',
+          title: 'Needs attention',
+          body: 'Problems in the current data that should be looked at now. Click to show or hide the list.',
         }}
       >
         <button
@@ -58,7 +58,7 @@ export function AlertsPanel() {
           <span className={styles.bang} aria-hidden="true">
             !
           </span>
-          {critical.length} critical
+          {critical.length} need{critical.length === 1 ? 's' : ''} attention
           <span className={styles.chevron} data-open={open || undefined} aria-hidden="true">
             ▾
           </span>
@@ -77,7 +77,7 @@ export function AlertsPanel() {
                   className={styles.investigate}
                   onClick={() => investigate(h)}
                 >
-                  Investigate →
+                  Look closer →
                 </button>
               )}
             </li>

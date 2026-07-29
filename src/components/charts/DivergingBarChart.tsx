@@ -42,7 +42,7 @@ export function DivergingBarChart({ data, size }: DivergingBarChartProps) {
   const threshold = data.threshold ?? 5;
 
   if (visible.length === 0) {
-    return <div className={styles.empty}>Gap not computable in this scope</div>;
+    return <div className={styles.empty}>Not enough data to show this gap</div>;
   }
 
   const width = measured.width || 240;

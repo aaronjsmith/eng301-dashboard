@@ -4,9 +4,9 @@
 export type Role = 'faculty' | 'chair' | 'admin';
 
 export const ROLE_OPTIONS: { id: Role; label: string; scope: string }[] = [
-  { id: 'faculty', label: 'Faculty', scope: 'Own sections only' },
-  { id: 'chair', label: 'Department Chair', scope: 'Department-wide' },
-  { id: 'admin', label: 'Administrator', scope: 'Anonymized summaries' },
+  { id: 'faculty', label: 'Teacher', scope: 'Only your own classes' },
+  { id: 'chair', label: 'Department chair', scope: 'Whole department' },
+  { id: 'admin', label: 'Administrator', scope: 'Summary view (no student names)' },
 ];
 
 export type Session = 'Spring' | 'Summer' | 'Fall' | 'Winter';

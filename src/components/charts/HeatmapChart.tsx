@@ -34,7 +34,7 @@ export function HeatmapChart({ data, size }: HeatmapChartProps) {
   if (!matrix) {
     return (
       <div className={styles.empty}>
-        Heatmap needs ≥ 2 courses in scope — widen the course filter
+        This grid needs at least 2 courses — set Course to All
       </div>
     );
   }
@@ -101,7 +101,7 @@ export function HeatmapChart({ data, size }: HeatmapChartProps) {
                             show(e, [
                               `${row} · ${matrix.colLabels[ci]}`,
                               cell.suppressed
-                                ? 'Suppressed (n < 20)'
+                                ? 'Hidden (fewer than 20 students)'
                                 : `${cell.formatted} · n = ${cell.n}`,
                             ])
                         : undefined

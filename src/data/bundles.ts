@@ -74,7 +74,7 @@ export const BUNDLES: ModuleBundle[] = [
   {
     id: 'bundle-overview',
     label: 'Overview',
-    description: 'Cross-course pass rates, gateway DFW by level, enrollment. Sets course scope to All.',
+    description: 'Big-picture view across courses: pass rates, DFW by level, and enrollment. Sets course filter to All.',
     globalCourse: 'all',
     modules: [
       {
@@ -99,7 +99,7 @@ export const BUNDLES: ModuleBundle[] = [
       },
       {
         id: 'ov-dfw-level',
-        title: 'Gateway DFW by level',
+        title: 'DFW by course level',
         metric: 'dfwRate',
         chartType: 'bars',
         size: 'M',
@@ -121,8 +121,8 @@ export const BUNDLES: ModuleBundle[] = [
   },
   {
     id: 'bundle-course-detail',
-    label: 'Course Detail',
-    description: 'Drill into the current course: grades, sessions, at-risk students.',
+    label: 'Course detail',
+    description: 'Look closer at one course: grades, terms, and students who may need help.',
     modules: [
       {
         id: 'cd-pass',
@@ -166,7 +166,7 @@ export const BUNDLES: ModuleBundle[] = [
       },
       {
         id: 'cd-midband-prof',
-        title: 'Mid-band share by professor',
+        title: 'Middle-grade share by professor',
         metric: 'midBandShare',
         chartType: 'bars',
         size: 'M',
@@ -179,8 +179,9 @@ export const BUNDLES: ModuleBundle[] = [
   },
   {
     id: 'bundle-equity',
-    label: 'Equity',
-    description: 'Gap analysis with ±5-pt thresholds and the course × gender surface. Sets course scope to All.',
+    label: 'Fairness gaps',
+    description:
+      'Shows gaps between groups (like gender or first-gen). Warns when a gap is bigger than 5 points. Sets course filter to All.',
     globalCourse: 'all',
     modules: [
       {
@@ -195,7 +196,7 @@ export const BUNDLES: ModuleBundle[] = [
       },
       {
         id: 'eq-firstgen-course',
-        title: '1st-gen gap by course',
+        title: 'First-gen gap by course',
         metric: 'firstGenGap',
         chartType: 'divergingBar',
         size: 'M',
@@ -205,7 +206,7 @@ export const BUNDLES: ModuleBundle[] = [
       },
       {
         id: 'eq-heatmap',
-        title: 'Pass-rate surface: course × gender',
+        title: 'Pass rate by course and gender',
         metric: 'passRate',
         chartType: 'heatmap',
         size: 'L',

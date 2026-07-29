@@ -14,11 +14,12 @@
   gap: 12px;
 }
 
-.mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: linear-gradient(135deg, var(--accent-module), var(--accent-presets));
+.logo {
+  height: 40px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+  border-radius: 6px;
 }
 
 .title {

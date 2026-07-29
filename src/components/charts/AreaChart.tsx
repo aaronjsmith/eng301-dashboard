@@ -139,7 +139,7 @@ export function AreaChart({ data, size }: AreaChartProps) {
   // Single series over the ordered axis
   const points = data.points;
   if (points.length === 0) {
-    return <div className={styles.empty}>No ordered series in scope</div>;
+    return <div className={styles.empty}>Nothing to chart in this view</div>;
   }
   const values = points.map((p) => p.value ?? 0);
   const maxValue = Math.max(...values, data.baseline?.value ?? 0, 1);

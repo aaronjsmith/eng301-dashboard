@@ -5,10 +5,15 @@ export function TitleBar() {
   return (
     <header className={styles.bar}>
       <div className={styles.brand}>
-        <span className={styles.mark} aria-hidden="true" />
+        <img
+          className={styles.logo}
+          src="/ensign-logo.png"
+          alt="Ensign College"
+          height={40}
+        />
         <div>
           <h1 className={styles.title}>Student Outcomes Dashboard</h1>
-          <p className={styles.subtitle}>ENG 201 · Core Competency Throughput</p>
+          <p className={styles.subtitle}>ENG 201 · how students are doing</p>
         </div>
       </div>
       <ViewSwitcher />

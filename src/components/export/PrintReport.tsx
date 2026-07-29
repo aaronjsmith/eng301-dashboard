@@ -149,8 +149,8 @@ export function PrintReport({ onDone }: PrintReportProps) {
   return (
     <div className={`${styles.report} print-report`}>
       <header className={styles.head}>
-        <h1 className={styles.title}>Student Outcomes — Pertinent Report</h1>
-        <p className={styles.subtitle}>ENG 201 · Core Competency Throughput Dashboard</p>
+        <h1 className={styles.title}>Student Outcomes — Summary Report</h1>
+        <p className={styles.subtitle}>ENG 201 · how students are doing</p>
       </header>
 
       <section className={styles.kpiStrip}>
@@ -169,8 +169,7 @@ export function PrintReport({ onDone }: PrintReportProps) {
         breachHighlights.map((h) => <BreachBlock key={h.id} highlight={h} />)
       ) : (
         <p className={styles.calm}>
-          No KRI thresholds are currently breached for this view — all presets
-          within target.
+          Nothing needs attention for this view — all key numbers are on track.
         </p>
       )}
 

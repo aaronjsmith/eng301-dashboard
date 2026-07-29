@@ -13,8 +13,8 @@ export function MagneticToggle() {
       onClick={() => dispatch({ type: 'set-magnetic', value: !magnetic })}
       title={
         magnetic
-          ? 'Magnetic grid on — modules snap to slots and displace neighbors'
-          : 'Magnetic grid off — free arrangement (turn on to re-snap)'
+          ? 'Snap on — cards line up in a neat grid'
+          : 'Snap off — place cards freely (turn on to snap again)'
       }
     >
       <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
@@ -26,7 +26,7 @@ export function MagneticToggle() {
           strokeLinecap="round"
         />
       </svg>
-      Magnetic
+      Snap
     </button>
   );
 }

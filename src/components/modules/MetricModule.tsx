@@ -29,12 +29,12 @@ interface MetricModuleProps {
 const SIZES: SizeTier[] = ['S', 'M', 'L'];
 
 const COMPARE_LABEL: Record<CompareTo, string> = {
-  none: 'No baseline',
-  priorSession: 'Prior session',
+  none: 'Nothing',
+  priorSession: 'Previous term',
   sameTermLastYear: 'Same term last year',
   courseAvg: 'Course average',
-  allCoursesAvg: 'All-courses average',
-  peerLevel: 'Peer course level',
+  allCoursesAvg: 'Average of all courses',
+  peerLevel: 'Similar course level',
 };
 
 const CHART_LABEL: Record<ChartType, string> = {
@@ -114,7 +114,7 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
           </Tip>
           <Tip content={GLOSSARY[def.indicator]}>
             <span className={styles.indicator}>
-              {def.indicator === 'lagging' ? 'Lag' : 'Lead'}
+              {def.indicator === 'lagging' ? 'After the fact' : 'Early warning'}
             </span>
           </Tip>
         </div>
@@ -183,7 +183,7 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
       {!isInvestigate && size !== 'S' && (
         <div className={styles.controls}>
           <label className={styles.control}>
-            <span className={styles.controlLabel}>Compare to</span>
+            <span className={styles.controlLabel}>Compare with</span>
             <select
               className={styles.select}
               value={sanitized.compareTo}
@@ -198,7 +198,7 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
             </select>
           </label>
           <label className={styles.control}>
-            <span className={styles.controlLabel}>Break down by</span>
+            <span className={styles.controlLabel}>Split by</span>
             <select
               className={styles.select}
               value={sanitized.breakdown}
@@ -246,7 +246,7 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
             aria-expanded={config.showTable ?? false}
             onClick={() => patch({ showTable: !config.showTable })}
           >
-            {config.showTable ? 'Hide data table' : 'Show data table'}
+            {config.showTable ? 'Hide student list' : 'Show student list'}
           </button>
           {config.showTable && <DataTable data={data} />}
         </div>
