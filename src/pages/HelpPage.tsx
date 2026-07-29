@@ -15,7 +15,7 @@ const TC01_STEPS = [
   {
     action: 'Read status bar.',
     expected:
-      'Data source Static Tables-2.xlsx (ENG 201 rows only), last-sync time, Viewing as Faculty Professor A.',
+      'Data source Static Tables-2.xlsx (ENG 201 rows only), last-sync time, Viewing as Faculty Professor John Keating.',
   },
   {
     action: 'Check filter chips.',

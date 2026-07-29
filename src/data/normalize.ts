@@ -4,6 +4,21 @@ import type { RawTable } from './schema';
 /** Canonical course this dashboard serves. */
 export const TARGET_COURSE = 'ENG201';
 
+/** Demo display names for the three ENG201 instructors in the sample workbook. */
+export const PROFESSOR_DISPLAY_NAMES: Record<string, string> = {
+  'Professor A': 'Professor John Keating',
+  'Professor B': 'Professor Henry Jones',
+  'Professor C': 'Professor Ron Clark',
+};
+
+export const DEFAULT_FACULTY_PROFESSOR = 'Professor John Keating';
+
+/** Map workbook labels (and already-mapped names) to the display roster. */
+export function displayProfessorName(raw: string): string {
+  const trimmed = raw.trim();
+  return PROFESSOR_DISPLAY_NAMES[trimmed] ?? trimmed;
+}
+
 /** Collapse variants like `ENG 201` / `eng201` to a comparable code. */
 export function normalizeCourseCode(raw: string): string {
   return raw.replace(/\s+/g, '').toUpperCase();
@@ -52,7 +67,7 @@ export function normalizeTables(tables: RawTable[]): StudentRow[] {
         major: String(raw['Major']).trim().toUpperCase(),
         pass,
         age: Number(raw['Age']),
-        professor: String(raw['Professor']).trim(),
+        professor: displayProfessorName(String(raw['Professor'])),
         session: String(raw['Session']).trim() as Session,
         score,
         grade: String(raw['Grade']).trim() as Grade,

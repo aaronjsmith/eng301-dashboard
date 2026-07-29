@@ -65,18 +65,18 @@ export function runSelfTest(rows: StudentRow[]): boolean {
   push('K5 full-time pass', 83.8, k5.full?.rate);
   push('K5 part-time pass', 87.6, k5.part?.rate);
 
-  // R1 — Professor A gender score gap (ENG201)
-  const r1a = genderScoreGap(profOf('Professor A'));
-  push('R1 Prof A gap (W−M)', 9.0, r1a?.gap, 0.1);
-  push('R1 Prof A women mean', 84.6, r1a?.fMean);
-  push('R1 Prof A men mean', 75.6, r1a?.mMean);
-  const r1c = genderScoreGap(profOf('Professor C'));
-  push('R1 Prof C gap ≈ 0', -0.9, r1c?.gap, 0.5);
+  // R1 — Keating gender score gap (ENG201)
+  const r1a = genderScoreGap(profOf('Professor John Keating'));
+  push('R1 Keating gap (W−M)', 9.0, r1a?.gap, 0.1);
+  push('R1 Keating women mean', 84.6, r1a?.fMean);
+  push('R1 Keating men mean', 75.6, r1a?.mMean);
+  const r1c = genderScoreGap(profOf('Professor Ron Clark'));
+  push('R1 Clark gap ≈ 0', -0.9, r1c?.gap, 0.5);
 
-  // R2 — Professor B bimodality (ENG201-scoped)
-  push('R2 Prof B mid-band', 0, midBandShare(profOf('Professor B')), 0.01);
+  // R2 — Jones bimodality (ENG201-scoped)
+  push('R2 Jones mid-band', 0, midBandShare(profOf('Professor Henry Jones')), 0.01);
   push('R2 total fails (ENG201)', 62, eng201.filter((r) => !r.pass).length, 0);
-  push('R2 Prof B ENG201 pass rate', 81.4, passRate(profOf('Professor B'))?.rate);
+  push('R2 Jones ENG201 pass rate', 81.4, passRate(profOf('Professor Henry Jones'))?.rate);
 
   // R3 — 18–21 × Summer (ENG201)
   const r3 = ageSessionRisk(eng201);
@@ -120,18 +120,18 @@ export function runSelfTest(rows: StudentRow[]): boolean {
     push('2025 ENG201 pass rate', 86.8, passRate(p201)?.rate, 0.1);
     // Persistent pattern: first-gen gap breached in 2025 too.
     push('2025 ENG201 1st-gen gap', -16.0, demographicPassGap(p201, 'firstGen')?.gap, 0.1);
-    // Scenarios absent in 2025: Prof A gap small, Prof B mid-band healthy,
+    // Scenarios absent in 2025: Keating gap small, Jones mid-band healthy,
     // no 18–21×Summer effect (structural, tolerance = the alert threshold).
     push(
-      '2025 Prof A gender gap ≈ 0',
+      '2025 Keating gender gap ≈ 0',
       0,
-      genderScoreGap(p201.filter((r) => r.professor === 'Professor A'))?.gap,
+      genderScoreGap(p201.filter((r) => r.professor === 'Professor John Keating'))?.gap,
       5,
     );
     push(
-      '2025 Prof B mid-band healthy',
+      '2025 Jones mid-band healthy',
       76.4,
-      midBandShare(p201.filter((r) => r.professor === 'Professor B')),
+      midBandShare(p201.filter((r) => r.professor === 'Professor Henry Jones')),
       0.1,
     );
     const r3p = ageSessionRisk(p201);

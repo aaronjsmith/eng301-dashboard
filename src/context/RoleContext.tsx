@@ -1,14 +1,18 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Role } from '../types';
+import {
+  DEFAULT_FACULTY_PROFESSOR,
+  displayProfessorName,
+} from '../data/normalize';
 import { readStored, writeStored } from '../state/storage';
 
 /**
  * FR4 — the active role view, plus which professor a Faculty view represents
- * (the picker default is Professor A). Faculty row-scoping happens centrally
+ * (default: Professor John Keating). Faculty row-scoping happens centrally
  * in DataContext using this value.
  */
 
-export const DEFAULT_FACULTY_PROFESSOR = 'Professor A';
+export { DEFAULT_FACULTY_PROFESSOR };
 
 interface RoleContextValue {
   role: Role;
@@ -36,7 +40,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
       role: ROLES.includes(raw.role) ? raw.role : 'faculty',
       facultyProfessor:
         typeof raw.facultyProfessor === 'string' && raw.facultyProfessor.length > 0
-          ? raw.facultyProfessor
+          ? displayProfessorName(raw.facultyProfessor)
           : DEFAULT_FACULTY_PROFESSOR,
     };
   });

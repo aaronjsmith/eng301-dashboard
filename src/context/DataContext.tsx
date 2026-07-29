@@ -10,7 +10,7 @@ import {
 } from 'react';
 import type { SourceMeta, StudentRow, SyncStatus } from '../types';
 import { loadDashboardData } from '../data/loadData';
-import { isTargetCourse, TARGET_COURSE } from '../data/normalize';
+import { isTargetCourse, TARGET_COURSE, displayProfessorName } from '../data/normalize';
 import { isStale, readCachedData, writeCachedData } from '../data/cache';
 import { runSelfTest } from '../metrics/selftest';
 import { useRole } from './RoleContext';
@@ -27,7 +27,11 @@ import { useRole } from './RoleContext';
 function eng201Only(rows: StudentRow[]): StudentRow[] {
   return rows
     .filter((r) => isTargetCourse(r.course))
-    .map((r) => (r.course === TARGET_COURSE ? r : { ...r, course: TARGET_COURSE }));
+    .map((r) => ({
+      ...r,
+      course: TARGET_COURSE,
+      professor: displayProfessorName(r.professor),
+    }));
 }
 
 function eng201Meta(meta: SourceMeta, rows: StudentRow[]): SourceMeta {
@@ -94,8 +98,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setMeta(meta);
       setStatus({ state: 'synced', meta });
       if (import.meta.env.DEV) runSelfTest(rows);
-      // Re-write cache if we trimmed non-ENG201 rows from an older snapshot.
-      if (rows.length !== cached.rows.length) writeCachedData({ rows, meta });
+      // Re-write cache if we trimmed non-ENG201 rows or remapped professors.
+      const remapped = rows.some(
+        (r, i) =>
+          r.course !== cached.rows[i]?.course ||
+          r.professor !== cached.rows[i]?.professor,
+      );
+      if (rows.length !== cached.rows.length || remapped) {
+        writeCachedData({ rows, meta });
+      }
       // FR2 staleness: older than 24 h ⇒ re-run the same pipeline on load.
       if (isStale(cached.meta)) void runImport('auto');
     } else {
