@@ -8,9 +8,9 @@ interface ExportButtonProps {
 }
 
 /**
- * FR7 — the wireframe's "X" button. Click opens the mode choice: Pertinent
- * report (print-stylesheet PDF, default) or Current view (PNG capture).
- * Every export is role-gated and stamped by the export pipeline.
+ * FR7 — export control. Click opens the mode choice: Pertinent report
+ * (print-stylesheet PDF, default) or Current view (PNG capture). Every
+ * export is role-gated and stamped by the export pipeline.
  */
 export function ExportButton({ onExport }: ExportButtonProps) {
   const [open, setOpen] = useState(false);
@@ -43,10 +43,20 @@ export function ExportButton({ onExport }: ExportButtonProps) {
       >
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
           <path
-            d="M3.5 3.5 14.5 14.5 M14.5 3.5 3.5 14.5"
+            d="M9 2.5v8.5M9 11l-3-3M9 11l3-3"
+            fill="none"
             stroke="currentColor"
-            strokeWidth="2.4"
+            strokeWidth="1.8"
             strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M3.5 12.5v1.5a1.5 1.5 0 0 0 1.5 1.5h8a1.5 1.5 0 0 0 1.5-1.5v-1.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       </button>
