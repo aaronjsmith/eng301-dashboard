@@ -1,10 +1,10 @@
 import type { FilterState, ModuleConfig } from '../types';
 
 /**
- * Default module layout + the three ready-made bundles (the System Design
- * Document's Overview / Course Detail / Equity views), addable from the
- * new-module slot as starting layouts. Bundle module ids are templates —
- * WorkspaceContext regenerates them on add so instances stay unique.
+ * Default module layout + the three ready-made bundles (Overview / Course
+ * Detail / Equity), addable from the new-module slot as starting layouts.
+ * Bundle module ids are templates — WorkspaceContext regenerates them on add
+ * so instances stay unique. All bundles are ENG201-scoped.
  */
 
 export const DEFAULT_MODULES: ModuleConfig[] = [
@@ -65,8 +65,6 @@ export interface ModuleBundle {
   id: string;
   label: string;
   description: string;
-  /** 'all' ⇒ adding the bundle widens the global course scope to every course. */
-  globalCourse?: 'all';
   modules: ModuleConfig[];
 }
 
@@ -74,8 +72,7 @@ export const BUNDLES: ModuleBundle[] = [
   {
     id: 'bundle-overview',
     label: 'Overview',
-    description: 'Big-picture view across courses: pass rates, DFW by level, and enrollment. Sets course filter to All.',
-    globalCourse: 'all',
+    description: 'Big-picture ENG201 view: pass rate, DFW, scores by term, and enrollment.',
     modules: [
       {
         id: 'ov-pass',
@@ -88,23 +85,23 @@ export const BUNDLES: ModuleBundle[] = [
         filters: {},
       },
       {
-        id: 'ov-pass-course',
-        title: 'Pass rate by course',
-        metric: 'passRate',
-        chartType: 'bars',
-        size: 'M',
-        compareTo: 'allCoursesAvg',
-        breakdown: 'course',
-        filters: {},
-      },
-      {
-        id: 'ov-dfw-level',
-        title: 'DFW by course level',
+        id: 'ov-dfw',
+        title: 'DFW rate by session',
         metric: 'dfwRate',
         chartType: 'bars',
         size: 'M',
         compareTo: 'none',
-        breakdown: 'courseLevel',
+        breakdown: 'session',
+        filters: {},
+      },
+      {
+        id: 'ov-score-session',
+        title: 'Average score by session',
+        metric: 'avgScore',
+        chartType: 'bars',
+        size: 'M',
+        compareTo: 'courseAvg',
+        breakdown: 'session',
         filters: {},
       },
       {
@@ -122,7 +119,7 @@ export const BUNDLES: ModuleBundle[] = [
   {
     id: 'bundle-course-detail',
     label: 'Course detail',
-    description: 'Look closer at one course: grades, terms, and students who may need help.',
+    description: 'Look closer at ENG201: grades, terms, and students who may need help.',
     modules: [
       {
         id: 'cd-pass',
@@ -181,35 +178,34 @@ export const BUNDLES: ModuleBundle[] = [
     id: 'bundle-equity',
     label: 'Fairness gaps',
     description:
-      'Shows gaps between groups (like gender or first-gen). Warns when a gap is bigger than 5 points. Sets course filter to All.',
-    globalCourse: 'all',
+      'Shows ENG201 gaps between groups (like gender or first-gen). Warns when a gap is bigger than 5 points.',
     modules: [
       {
-        id: 'eq-gender-course',
-        title: 'Gender gap by course',
+        id: 'eq-gender-session',
+        title: 'Gender gap by session',
         metric: 'genderGap',
         chartType: 'divergingBar',
         size: 'M',
         compareTo: 'none',
-        breakdown: 'course',
+        breakdown: 'session',
         filters: {},
       },
       {
-        id: 'eq-firstgen-course',
-        title: 'First-gen gap by course',
+        id: 'eq-firstgen-session',
+        title: 'First-gen gap by session',
         metric: 'firstGenGap',
         chartType: 'divergingBar',
         size: 'M',
         compareTo: 'none',
-        breakdown: 'course',
+        breakdown: 'session',
         filters: {},
       },
       {
-        id: 'eq-heatmap',
-        title: 'Pass rate by course and gender',
+        id: 'eq-pass-gender',
+        title: 'Pass rate by gender',
         metric: 'passRate',
-        chartType: 'heatmap',
-        size: 'L',
+        chartType: 'bars',
+        size: 'M',
         compareTo: 'none',
         breakdown: 'gender',
         filters: {},
@@ -230,8 +226,9 @@ export const BUNDLES: ModuleBundle[] = [
 ];
 
 /**
- * The global scope a fresh workspace starts with: ENG201, all sessions,
- * current year (so single-year presets/highlights match the verified numbers).
+ * The global scope a fresh workspace starts with: ENG201, current year (so
+ * single-year presets/highlights match the verified numbers). Course is
+ * locked in the filter bar; this keeps selectRows honest if anything widens.
  */
 export const DEFAULT_GLOBAL_FILTERS: FilterState = {
   course: ['ENG201'],

@@ -8,19 +8,22 @@ import styles from './GlobalFilterBar.module.css';
 
 /**
  * FR5 — the global filter bar: the outer population every panel computes
- * against (presets, highlights, every module). Carries the few dimensions set
- * once per session — course · session · professor (chair/admin only; faculty
- * are row-scoped already). Module popups narrow WITHIN this scope.
+ * against (presets, highlights, every module). Course is fixed to ENG201
+ * (data load drops other courses); the bar carries year · session · professor
+ * (chair/admin only; faculty are row-scoped already). Module popups narrow
+ * WITHIN this scope.
  */
 export function GlobalFilterBar() {
   const { role } = useRole();
-  const { meta, professors, years } = useData();
+  const { professors, years } = useData();
   const { globalFilters, dispatch } = useWorkspace();
 
   const setDim = (dim: Dimension, value: string | null) => {
     const next = { ...globalFilters };
     if (value === null) delete next[dim];
     else next[dim] = [value];
+    // Course stays locked to ENG201 even if a bundle/reset touched filters.
+    next.course = ['ENG201'];
     dispatch({ type: 'set-global', filters: next });
   };
 
@@ -57,7 +60,6 @@ export function GlobalFilterBar() {
   return (
     <div className={styles.bar}>
       {years.length > 1 && group('year', 'Year', years)}
-      {group('course', 'Course', meta?.courses ?? [])}
       {group('session', 'Session', [...SESSION_ORDER])}
       {role !== 'faculty' && group('professor', 'Professor', professors)}
     </div>

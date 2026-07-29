@@ -150,12 +150,7 @@ function computeBaseline(
   });
 
   // Population-average baselines never apply to counts (see availableCompareTos).
-  if (
-    def.unit === 'count' &&
-    (config.compareTo === 'courseAvg' ||
-      config.compareTo === 'allCoursesAvg' ||
-      config.compareTo === 'peerLevel')
-  ) {
+  if (def.unit === 'count' && config.compareTo === 'courseAvg') {
     return undefined;
   }
 
@@ -167,20 +162,6 @@ function computeBaseline(
       const rows = ctx.baselineRows.filter((r) => courses.has(r.course));
       const value = def.compute(rows);
       return value !== null ? fmt(value, 'Course average') : undefined;
-    }
-    case 'allCoursesAvg': {
-      const value = def.compute(ctx.baselineRows);
-      return value !== null ? fmt(value, 'All-courses average') : undefined;
-    }
-    case 'peerLevel': {
-      const levels = new Set(population.map((r) => (Number(/(\d+)/.exec(r.course)?.[1] ?? 0) >= 200 ? '200' : '100')));
-      if (levels.size !== 1) return undefined;
-      const target = levels.has('200') ? '100' : '200';
-      const rows = ctx.baselineRows.filter(
-        (r) => (Number(/(\d+)/.exec(r.course)?.[1] ?? 0) >= 200 ? '200' : '100') === target,
-      );
-      const value = def.compute(rows);
-      return value !== null ? fmt(value, `${target}-level peers`) : undefined;
     }
     case 'priorSession': {
       const sessions = sessionsIn(population);

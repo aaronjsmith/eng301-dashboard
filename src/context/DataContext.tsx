@@ -10,6 +10,7 @@ import {
 } from 'react';
 import type { SourceMeta, StudentRow, SyncStatus } from '../types';
 import { loadDashboardData } from '../data/loadData';
+import { isTargetCourse, TARGET_COURSE } from '../data/normalize';
 import { isStale, readCachedData, writeCachedData } from '../data/cache';
 import { runSelfTest } from '../metrics/selftest';
 import { useRole } from './RoleContext';
@@ -21,6 +22,21 @@ import { useRole } from './RoleContext';
  * `baselineRows` is the one sanctioned exception: aggregate comparison
  * baselines only ("my sections vs. course average") — never rendered as rows.
  */
+
+/** Drop pre-ENG201-only cache rows so a stale browser cache cannot widen scope. */
+function eng201Only(rows: StudentRow[]): StudentRow[] {
+  return rows
+    .filter((r) => isTargetCourse(r.course))
+    .map((r) => (r.course === TARGET_COURSE ? r : { ...r, course: TARGET_COURSE }));
+}
+
+function eng201Meta(meta: SourceMeta, rows: StudentRow[]): SourceMeta {
+  return {
+    ...meta,
+    courses: [TARGET_COURSE],
+    rowCount: rows.length,
+  };
+}
 
 interface DataContextValue {
   scopedRows: StudentRow[];
@@ -72,10 +88,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const cached = readCachedData();
     if (cached) {
-      setRows(cached.rows);
-      setMeta(cached.meta);
-      setStatus({ state: 'synced', meta: cached.meta });
-      if (import.meta.env.DEV) runSelfTest(cached.rows);
+      const rows = eng201Only(cached.rows);
+      const meta = eng201Meta(cached.meta, rows);
+      setRows(rows);
+      setMeta(meta);
+      setStatus({ state: 'synced', meta });
+      if (import.meta.env.DEV) runSelfTest(rows);
+      // Re-write cache if we trimmed non-ENG201 rows from an older snapshot.
+      if (rows.length !== cached.rows.length) writeCachedData({ rows, meta });
       // FR2 staleness: older than 24 h ⇒ re-run the same pipeline on load.
       if (isStale(cached.meta)) void runImport('auto');
     } else {

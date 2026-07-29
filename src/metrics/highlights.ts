@@ -17,13 +17,12 @@ import { THRESHOLDS } from './thresholds';
  * declarative and evaluated against the CURRENT data every sync: severity
  * comes from the same thresholds as the presets, so a highlight that heals
  * disappears on its own and Presets/Highlights can never disagree.
+ * All rules read scopeRows only (ENG201-focused; no cross-course evidence).
  */
 
 interface RuleContext {
-  /** Role scope ∩ global filters — what most rules read. */
+  /** Role scope ∩ global filters — what every rule reads. */
   scopeRows: StudentRow[];
-  /** Role scope ∩ global filters with COURSE removed — cross-course rules. */
-  crossCourseRows: StudentRow[];
 }
 
 interface HighlightRule {
@@ -95,20 +94,20 @@ const RULES: HighlightRule[] = [
   },
   {
     // R2 — all-or-nothing grading
-    evaluate({ scopeRows, crossCourseRows }) {
+    evaluate({ scopeRows }) {
       const candidates = [...groupBy(scopeRows, 'professor')]
         .map(([prof, rows]) => ({ prof, mid: midBandShare(rows), pr: passRate(rows), n: rows.length }))
         .filter((c) => c.mid !== null && min20(c.n) && c.mid < THRESHOLDS.midBandMin);
       if (candidates.length === 0) return null;
       const worst = candidates.reduce((a, b) => (b.mid! < a.mid! ? b : a));
-      const allFails = crossCourseRows.filter((r) => !r.pass);
+      const allFails = scopeRows.filter((r) => !r.pass);
       const profFails = allFails.filter((r) => r.professor === worst.prof);
       const failShare =
         allFails.length > 0 ? Math.round((profFails.length / allFails.length) * 100) : 0;
       return {
         id: 'hl-prof-bimodal',
         label: `${worst.prof} grades with almost no middle scores`,
-        evidence: `Only ${percent1(worst.mid!)} of grades are in the 70–89 middle range (healthy is often around 70%), even though the pass rate looks normal at ${worst.pr ? percent1(worst.pr.rate) : '—'}. Across all courses, ${worst.prof}'s sections account for ${profFails.length} of ${allFails.length} fails (${failShare}%).`,
+        evidence: `Only ${percent1(worst.mid!)} of grades are in the 70–89 middle range (healthy is often around 70%), even though the pass rate looks normal at ${worst.pr ? percent1(worst.pr.rate) : '—'}. ${worst.prof}'s sections account for ${profFails.length} of ${allFails.length} fails in this view (${failShare}%).`,
         severity: 'critical',
         category: 'instructor',
         roles: ['chair', 'admin'],
@@ -179,22 +178,16 @@ const RULES: HighlightRule[] = [
     },
   },
   {
-    // R1 twin — course-level gender PASS gap in another course
-    evaluate({ crossCourseRows }) {
-      const candidates = [...groupBy(crossCourseRows, 'course')]
-        .map(([course, rows]) => ({ course, g: genderPassGap(rows) }))
-        .filter(
-          (c) => c.g !== null && min20(c.g.f.n) && min20(c.g.m.n) &&
-            Math.abs(c.g.gap) > THRESHOLDS.equityGapMax,
-        );
-      if (candidates.length === 0) return null;
-      const worst = candidates.reduce((a, b) =>
-        Math.abs(b.g!.gap) > Math.abs(a.g!.gap) ? b : a,
-      );
+    // R1 twin — course-level gender PASS gap
+    evaluate({ scopeRows }) {
+      const g = genderPassGap(scopeRows);
+      if (!g || !min20(g.f.n) || !min20(g.m.n) || Math.abs(g.gap) <= THRESHOLDS.equityGapMax) {
+        return null;
+      }
       return {
         id: 'hl-course-gender-gap',
-        label: `${worst.course}: women and men pass at very different rates`,
-        evidence: `Women pass at ${percent1(worst.g!.f.rate)} vs men at ${percent1(worst.g!.m.rate)} (${signedPoints(worst.g!.gap)} points).`,
+        label: 'Women and men pass at very different rates',
+        evidence: `Women pass at ${percent1(g.f.rate)} vs men at ${percent1(g.m.rate)} (${signedPoints(g.gap)} points).`,
         severity: 'notable',
         category: 'equity',
         roles: ['chair', 'admin'],
@@ -202,9 +195,9 @@ const RULES: HighlightRule[] = [
         investigate: {
           highlightId: 'hl-course-gender-gap',
           metric: 'genderGap',
-          slice: { course: [worst.course] },
+          slice: {},
           baseline: {},
-          baselineLabel: 'All courses',
+          baselineLabel: 'Full course view',
         },
       };
     },
@@ -321,25 +314,6 @@ const RULES: HighlightRule[] = [
     },
   },
   {
-    // Weakest gateway course (cross-course)
-    evaluate({ crossCourseRows }) {
-      const groups = [...groupBy(crossCourseRows, 'course')]
-        .map(([course, rows]) => ({ course, pr: passRate(rows) }))
-        .filter((g) => g.pr !== null && min20(g.pr.n));
-      if (groups.length < 2) return null;
-      const worst = groups.reduce((a, b) => (b.pr!.rate < a.pr!.rate ? b : a));
-      return {
-        id: 'hl-weakest-gateway',
-        label: `${worst.course} has the lowest pass rate`,
-        evidence: `${percent1(worst.pr!.rate)} pass — lowest of the ${groups.length} courses shown.`,
-        severity: 'context',
-        category: 'course',
-        roles: ['faculty', 'chair', 'admin'],
-        linkedPresetId: 'K3',
-      };
-    },
-  },
-  {
     // Small-cell suppression footnote (admin only)
     evaluate({ scopeRows }) {
       const small = [...groupBy(scopeRows, 'major')]
@@ -362,11 +336,8 @@ const RULES: HighlightRule[] = [
 ];
 
 /** Evaluate every rule against current data; order = severity then rule order. */
-export function computeHighlights(
-  scopeRows: StudentRow[],
-  crossCourseRows: StudentRow[],
-): HighlightItem[] {
-  const ctx: RuleContext = { scopeRows, crossCourseRows };
+export function computeHighlights(scopeRows: StudentRow[]): HighlightItem[] {
+  const ctx: RuleContext = { scopeRows };
   const items = RULES.map((rule) => rule.evaluate(ctx)).filter(
     (h): h is HighlightItem => h !== null,
   );

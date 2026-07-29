@@ -82,8 +82,8 @@ export interface SyncStatus {
 
 /**
  * Filterable/breakdown dimensions (FR5). Values are the strings produced by
- * dimensionValue(). `courseLevel` is derived (100- vs 200-level) and is a
- * breakdown-only dimension — it never appears in filter popups.
+ * dimensionValue(). `course` and `courseLevel` remain in the union for saved
+ * configs / sanitize, but are not offered in ENG201-only UI (single course).
  */
 export type Dimension =
   | 'course'
@@ -130,9 +130,7 @@ export type CompareTo =
   | 'none'
   | 'priorSession'
   | 'sameTermLastYear'
-  | 'courseAvg'
-  | 'allCoursesAvg'
-  | 'peerLevel';
+  | 'courseAvg';
 
 /** Lagging/leading is a property of the metric (registry), rendered as a badge. */
 export type IndicatorKind = 'lagging' | 'leading';

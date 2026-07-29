@@ -29,7 +29,10 @@ const arrayBuffer = buffer.buffer.slice(
 const tables = parseXlsx(arrayBuffer);
 validateTables(tables);
 const rows = normalizeTables(tables);
-console.log(`XLSX import: ${rows.length} rows from ${tables.length} sheets`);
+const courses = [...new Set(rows.map((r) => r.course))];
+console.log(
+  `XLSX import: ${rows.length} ENG201 rows from ${tables.length} sheets (kept courses: ${courses.join(', ') || 'none'})`,
+);
 const xlsxOk = runSelfTest(rows);
 
 // ── CSV parity (FR1: "a CSV export of the same tables must work identically")

@@ -71,6 +71,8 @@ export async function loadDashboardData(options: LoadOptions): Promise<ImportRes
   validateTables(merged);
   const rows = normalizeTables(merged);
 
+  // After normalize, only ENG201 remains — meta.courses stays truthful for
+  // any caller that still reads it (filters no longer offer a Course chip).
   const courses = [...new Set(rows.map((r) => r.course))];
   const meta: SourceMeta = {
     source,

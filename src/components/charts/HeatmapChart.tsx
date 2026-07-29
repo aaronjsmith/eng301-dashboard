@@ -36,7 +36,7 @@ export function HeatmapChart({ data, size }: HeatmapChartProps) {
   if (!matrix) {
     return (
       <div className={styles.empty}>
-        This grid needs at least 2 courses — set Course to All
+        This grid needs at least 2 courses — not available for ENG 201 alone
       </div>
     );
   }

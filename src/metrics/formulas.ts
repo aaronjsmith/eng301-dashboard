@@ -1,6 +1,6 @@
 import type { Dimension, Session, StudentRow } from '../types';
 import { SESSION_ORDER } from '../types';
-import { ageBandOf, courseLevelOf, groupBy } from './scope';
+import { ageBandOf, groupBy } from './scope';
 
 /**
  * Pure KPI/KRI formulas (FR3). Every number on screen traces to one of these;
@@ -33,21 +33,6 @@ export function meanScore(rows: StudentRow[]): number | null {
 export function meanAge(rows: StudentRow[]): number | null {
   if (rows.length === 0) return null;
   return rows.reduce((sum, r) => sum + r.age, 0) / rows.length;
-}
-
-/** K3 — gateway DFW by course level (inherently cross-course). */
-export function dfwByLevel(rows: StudentRow[]): {
-  level100: RateResult | null;
-  level200: RateResult | null;
-  gap: number | null;
-} {
-  const l100 = dfwRate(rows.filter((r) => courseLevelOf(r.course) === '100-level'));
-  const l200 = dfwRate(rows.filter((r) => courseLevelOf(r.course) === '200-level'));
-  return {
-    level100: l100,
-    level200: l200,
-    gap: l100 && l200 ? l100.rate - l200.rate : null,
-  };
 }
 
 /** K4 — enrollment counts in session order. */

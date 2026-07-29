@@ -19,12 +19,8 @@ import { sanitizeConfigForRole } from '../metrics/availability';
 export interface DashboardScope {
   /** Role scope ∩ global filters — what presets/highlights/modules read. */
   scopeRows: StudentRow[];
-  /** Role scope ∩ global filters minus course — cross-course rules (K3 etc.). */
-  crossCourseRows: StudentRow[];
   /** Role scope ∩ global filters minus year — year-crossing baselines/trends. */
   yearAgnosticRows: StudentRow[];
-  /** Role scope ∩ global minus year AND course — K3's prior-year equivalent. */
-  yearAgnosticCrossCourseRows: StudentRow[];
   /** ALL rows — aggregate comparison baselines only (faculty exception). */
   baselineRows: StudentRow[];
 }
@@ -34,14 +30,10 @@ export function useDashboardScope(): DashboardScope {
   const { globalFilters } = useWorkspace();
 
   return useMemo(() => {
-    const { course: _course, ...withoutCourse } = globalFilters;
     const { year: _year, ...withoutYear } = globalFilters;
-    const { year: _y2, course: _c2, ...withoutYearCourse } = globalFilters;
     return {
       scopeRows: selectRows(scopedRows, globalFilters),
-      crossCourseRows: selectRows(scopedRows, withoutCourse),
       yearAgnosticRows: selectRows(scopedRows, withoutYear),
-      yearAgnosticCrossCourseRows: selectRows(scopedRows, withoutYearCourse),
       // Aggregate-baseline exception stays unscoped by role/course/professor,
       // but the year cohort boundary applies — a 2026 card never compares
       // against a 2025+2026 blend.
@@ -55,8 +47,7 @@ export function useDashboardScope(): DashboardScope {
 /** Presets visible to the current role, panel rows only (K5 stays off-panel). */
 export function usePresets(): { panel: PresetValue[]; all: PresetValue[] } {
   const { role } = useRole();
-  const { scopeRows, crossCourseRows, yearAgnosticRows, yearAgnosticCrossCourseRows } =
-    useDashboardScope();
+  const { scopeRows, yearAgnosticRows } = useDashboardScope();
 
   return useMemo(() => {
     // FR6 trend arrows: only meaningful when the scope spans exactly one year
@@ -67,31 +58,25 @@ export function usePresets(): { panel: PresetValue[]; all: PresetValue[] } {
       const priorYear = years[0] - 1;
       const priorScope = yearAgnosticRows.filter((r) => r.year === priorYear);
       if (priorScope.length > 0) {
-        prior = {
-          scopeRows: priorScope,
-          levelRows: yearAgnosticCrossCourseRows.filter((r) => r.year === priorYear),
-        };
+        prior = { scopeRows: priorScope };
       }
     }
-    const all = computePresets(scopeRows, crossCourseRows, prior);
+    const all = computePresets(scopeRows, prior);
     const panel = all.filter(
       (p) => !p.offPanel && (!p.roles || p.roles.includes(role)),
     );
     return { panel, all };
-  }, [scopeRows, crossCourseRows, yearAgnosticRows, yearAgnosticCrossCourseRows, role]);
+  }, [scopeRows, yearAgnosticRows, role]);
 }
 
 /** Highlights the current role may see (severity/category filtering is UI state). */
 export function useHighlights(): HighlightItem[] {
   const { role } = useRole();
-  const { scopeRows, crossCourseRows } = useDashboardScope();
+  const { scopeRows } = useDashboardScope();
 
   return useMemo(
-    () =>
-      computeHighlights(scopeRows, crossCourseRows).filter((h) =>
-        h.roles.includes(role),
-      ),
-    [scopeRows, crossCourseRows, role],
+    () => computeHighlights(scopeRows).filter((h) => h.roles.includes(role)),
+    [scopeRows, role],
   );
 }
 

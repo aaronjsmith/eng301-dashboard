@@ -34,8 +34,6 @@ const COMPARE_LABEL: Record<CompareTo, string> = {
   priorSession: 'Previous term',
   sameTermLastYear: 'Same term last year',
   courseAvg: 'Course average',
-  allCoursesAvg: 'Average of all courses',
-  peerLevel: 'Similar course level',
 };
 
 const CHART_LABEL: Record<ChartType, string> = {

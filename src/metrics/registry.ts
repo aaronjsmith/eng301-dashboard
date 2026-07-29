@@ -43,7 +43,7 @@ export interface MetricDef {
   gapThreshold?: number;
   allowedBreakdowns: (Dimension | 'none')[];
   defaultChart: ChartType;
-  /** True for inherently cross-course metrics (K3): the course filter is ignored. */
+  /** Unused in ENG201-only builds; kept for type/API stability. */
   ignoresCourseFilter?: boolean;
   higherIsBetter?: boolean;
 }
@@ -61,8 +61,6 @@ const EVERY_DIM: (Dimension | 'none')[] = [
   'pell',
   'englishNative',
   'residency',
-  'course',
-  'courseLevel',
 ];
 
 export const METRICS: Record<MetricId, MetricDef> = {
@@ -92,7 +90,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: (rows) => dfwRate(rows)?.rate ?? null,
     format: percent1,
     target: {
-      value: 100 - THRESHOLDS.passRateTarget,
+      value: THRESHOLDS.dfwRateMax,
       label: '≤ 15%',
       direction: 'atMost',
     },
@@ -140,7 +138,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     // Hero = A-range share; the composition itself renders as the chart.
     compute: (rows) => gradeBandShares(rows).find((b) => b.band === 'A')?.share ?? null,
     format: percent1,
-    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'course'],
+    allowedBreakdowns: ['none', 'session', 'year', 'professor'],
     defaultChart: 'pie',
   },
   genderGap: {
@@ -154,7 +152,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: (rows) => genderScoreGap(rows)?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
-    allowedBreakdowns: ['none', 'professor', 'course', 'session', 'year', 'major', 'ageBand'],
+    allowedBreakdowns: ['none', 'professor', 'session', 'year', 'major', 'ageBand'],
     defaultChart: 'divergingBar',
   },
   firstGenGap: {
@@ -168,7 +166,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: (rows) => demographicPassGap(rows, 'firstGen')?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
-    allowedBreakdowns: ['none', 'course', 'session', 'year', 'professor', 'major'],
+    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'major'],
     defaultChart: 'divergingBar',
   },
   pellGap: {
@@ -182,7 +180,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: (rows) => demographicPassGap(rows, 'pell')?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
-    allowedBreakdowns: ['none', 'course', 'session', 'year', 'professor', 'major'],
+    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'major'],
     defaultChart: 'divergingBar',
   },
   midBandShare: {
@@ -196,7 +194,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: midBandShare,
     format: percent1,
     target: { value: THRESHOLDS.midBandMin, label: '≥ 25%', direction: 'atLeast' },
-    allowedBreakdowns: ['none', 'professor', 'course', 'session', 'year'],
+    allowedBreakdowns: ['none', 'professor', 'session', 'year'],
     defaultChart: 'bars',
     higherIsBetter: true,
   },
@@ -210,7 +208,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
       'How many students look like they may need help soon, based on scores and known risk patterns. Lower is better.',
     compute: (rows) => flagStudents(rows).counts.total,
     format: countFmt,
-    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'course', 'ageBand', 'major'],
+    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'ageBand', 'major'],
     defaultChart: 'bars',
     higherIsBetter: false,
   },

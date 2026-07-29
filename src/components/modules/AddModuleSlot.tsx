@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ChartType, ModuleConfig } from '../../types';
-import { useData } from '../../context/DataContext';
 import { useRole } from '../../context/RoleContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { freshId } from '../../state/ids';
@@ -20,12 +19,10 @@ const CHART_LABEL: Record<ChartType, string> = {
  * The dashed "new instance" slot — always reflows to the end of the roster.
  * Offers a blank module plus the three starting layouts as accordions: each
  * expands to its modules for one-at-a-time adds (menu stays open; the global
- * scope is untouched), with "Add all" keeping the whole-bundle behavior
- * (including Overview/Equity widening the course scope to All).
+ * scope is untouched), with "Add all" appending the whole bundle.
  */
 export function AddModuleSlot() {
   const { dispatch, bundles } = useWorkspace();
-  const { meta } = useData();
   const { role } = useRole();
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -127,7 +124,6 @@ export function AddModuleSlot() {
                         dispatch({
                           type: 'add-bundle',
                           bundle,
-                          courses: meta?.courses ?? [],
                         });
                         close();
                       }}

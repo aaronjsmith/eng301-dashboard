@@ -33,7 +33,7 @@ export type WorkspaceAction =
   | { type: 'update-module'; id: string; patch: Partial<ModuleConfig> }
   | { type: 'remove-module'; id: string }
   | { type: 'add-module'; config: ModuleConfig }
-  | { type: 'add-bundle'; bundle: ModuleBundle; courses: string[] }
+  | { type: 'add-bundle'; bundle: ModuleBundle }
   | { type: 'set-layout'; slots: Record<string, GridSlot> }
   | { type: 'set-free-offset'; id: string; offset: { dx: number; dy: number } | null }
   | { type: 'set-global'; filters: FilterState }
@@ -57,11 +57,7 @@ function reducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState
       return { ...state, modules: [...state.modules, action.config] };
     case 'add-bundle': {
       const added = action.bundle.modules.map((m) => ({ ...m, id: freshId(m.id) }));
-      const globalFilters =
-        action.bundle.globalCourse === 'all'
-          ? { ...state.globalFilters, course: action.courses }
-          : state.globalFilters;
-      return { ...state, modules: [...state.modules, ...added], globalFilters };
+      return { ...state, modules: [...state.modules, ...added] };
     }
     case 'set-layout':
       // Map-patch: only listed ids move — role-hidden modules keep their slots.

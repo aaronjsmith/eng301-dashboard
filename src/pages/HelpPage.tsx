@@ -15,11 +15,11 @@ const TC01_STEPS = [
   {
     action: 'Read status bar.',
     expected:
-      'Data source Static Tables-2.xlsx (3227 rows), last-sync time, Viewing as Faculty Professor A.',
+      'Data source Static Tables-2.xlsx (ENG 201 rows only), last-sync time, Viewing as Faculty Professor A.',
   },
   {
     action: 'Check filter chips.',
-    expected: 'Course ENG 201 and Year 2026 selected by default.',
+    expected: 'Year 2026 selected by default; no Course chip (ENG 201 only).',
   },
   {
     action: 'Review Presets panel.',

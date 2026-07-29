@@ -7,8 +7,8 @@ export const THRESHOLDS = {
   passRateTarget: 85,
   /** K2 — average course grade target (≥, B−). */
   avgScoreTarget: 80,
-  /** K3 — 100-level DFW within this many pts of 200-level. */
-  levelGapMax: 3,
+  /** K3 — ENG201 DFW rate target (≤). */
+  dfwRateMax: 15,
   /** R1/R4/K5 — equity gap alert (|gap| >). */
   equityGapMax: 5,
   /** R2 — max−min pass-rate spread across professors (>). */

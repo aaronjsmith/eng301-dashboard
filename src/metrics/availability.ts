@@ -52,7 +52,7 @@ export function availableChartTypes(
       breakdown !== 'course' &&
       info.courseCount >= 2
     ) {
-      types.push('heatmap'); // course × dimension surface
+      types.push('heatmap'); // multi-course only — not offered for ENG201-only
     }
   }
   return types;
@@ -68,7 +68,7 @@ export function availableCompareTos(metric: MetricId): CompareTo[] {
   if (metricDef(metric).unit === 'count') {
     return ['none', 'priorSession', 'sameTermLastYear'];
   }
-  return ['none', 'priorSession', 'sameTermLastYear', 'courseAvg', 'allCoursesAvg', 'peerLevel'];
+  return ['none', 'priorSession', 'sameTermLastYear', 'courseAvg'];
 }
 
 /** True when a dimension splits the population into at least two groups. */
@@ -85,7 +85,7 @@ function splitsPopulation(rows: StudentRow[], dim: Dimension): boolean {
  * Breakdown options a role may use for a metric (faculty never see professor).
  * With `scopeRows`, dimensions the current scope pins to a single group are
  * dropped too — breaking down ENG201 by course (or course level) is a no-op
- * that just relabels the same bar.
+ * and those dimensions are omitted from allowed lists for ENG201-only.
  */
 export function availableBreakdowns(
   metric: ModuleConfig['metric'],

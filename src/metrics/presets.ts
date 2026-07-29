@@ -2,7 +2,7 @@ import type { PresetValue, StudentRow } from '../types';
 import {
   ageSessionRisk,
   demographicPassGap,
-  dfwByLevel,
+  dfwRate,
   enrollmentBySession,
   genderScoreGap,
   intensityGap,
@@ -20,17 +20,10 @@ import { THRESHOLDS } from './thresholds';
  * computed the same way every time. Panel order K1–K4 then R1–R4 per the
  * spec's mapping table; K5 is computed but off-panel (Highlights surfaces it
  * on breach). KRI breaches are 'critical'; KPI target misses are 'notable'.
+ * Scoped to ENG201 (the only course loaded).
  */
 
-/**
- * @param scopeRows rows after role scope ∩ global filters — what presets read.
- * @param levelRows rows after role scope with the COURSE filter ignored —
- *   K3 is inherently cross-course (spec: gateway DFW by course level).
- */
-function buildPresets(
-  scopeRows: StudentRow[],
-  levelRows: StudentRow[],
-): PresetValue[] {
+function buildPresets(scopeRows: StudentRow[]): PresetValue[] {
   const presets: PresetValue[] = [];
 
   // K1 — course pass rate
@@ -71,25 +64,24 @@ function buildPresets(
         : undefined,
   });
 
-  // K3 — gateway DFW by course level (ignores the course filter)
-  const k3 = dfwByLevel(levelRows);
+  // K3 — DFW rate for ENG201
+  const k3 = dfwRate(scopeRows);
   presets.push({
     id: 'K3',
-    label: 'DFW: 100-level vs 200-level',
+    label: 'DFW rate',
     kind: 'kpi',
     metric: 'dfwRate',
-    value: k3.gap,
-    formatted:
-      k3.level100 && k3.level200
-        ? `${percent1(k3.level100.rate)} vs ${percent1(k3.level200.rate)}`
-        : '—',
-    detail: 'DFW means D, F, or Withdraw — compares intro vs higher courses',
-    target: 'Within 3 pts',
+    value: k3?.rate ?? null,
+    formatted: k3 ? percent1(k3.rate) : '—',
+    detail: k3
+      ? `${k3.passed} of ${k3.n} students earned D, F, or withdrew`
+      : 'No students in this view',
+    target: '≤ 15%',
     description:
-      'Compares how often intro (100-level) vs higher (200-level) courses end in D, F, or withdraw. Goal: the two rates stay within 3 points.',
+      'DFW means D, F, or Withdraw — share of students who did not finish with a C− or better. Goal: 15% or less.',
     breach:
-      k3.gap !== null && k3.gap > THRESHOLDS.levelGapMax
-        ? { severity: 'notable', formattedDelta: signedPoints(k3.gap) }
+      k3 && k3.rate > THRESHOLDS.dfwRateMax
+        ? { severity: 'notable', formattedDelta: signedPoints(k3.rate - THRESHOLDS.dfwRateMax) }
         : undefined,
   });
 
@@ -260,7 +252,6 @@ function buildPresets(
 /** Prior-year equivalents of the current scope (single-year scopes only). */
 export interface PriorScope {
   scopeRows: StudentRow[];
-  levelRows: StudentRow[];
 }
 
 /**
@@ -270,7 +261,7 @@ export interface PriorScope {
 const TREND_SENSE: Record<string, 'higher' | 'lower' | 'shrinkAbs'> = {
   K1: 'higher',
   K2: 'higher',
-  K3: 'shrinkAbs',
+  K3: 'lower',
   K4: 'higher',
   R1: 'shrinkAbs',
   R2: 'higher',
@@ -288,14 +279,13 @@ const FLAT_EPSILON = 0.05;
  */
 export function computePresets(
   scopeRows: StudentRow[],
-  levelRows: StudentRow[],
   prior?: PriorScope,
 ): PresetValue[] {
-  const presets = buildPresets(scopeRows, levelRows);
+  const presets = buildPresets(scopeRows);
   if (!prior || prior.scopeRows.length === 0) return presets;
 
   const priorValues = new Map(
-    buildPresets(prior.scopeRows, prior.levelRows).map((p) => [p.id, p.value]),
+    buildPresets(prior.scopeRows).map((p) => [p.id, p.value]),
   );
 
   return presets.map((preset) => {
