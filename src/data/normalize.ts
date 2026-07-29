@@ -1,10 +1,14 @@
 import { FALLBACK_YEAR, type Grade, type Session, type StudentRow } from '../types';
 import type { RawTable } from './schema';
 
-/** Canonical course this dashboard serves. */
-export const TARGET_COURSE = 'ENG201';
+/** Courses this dashboard serves (others are dropped on import). */
+export const TARGET_COURSES = ['ENG201', 'MAT110'] as const;
+export type TargetCourse = (typeof TARGET_COURSES)[number];
 
-/** Demo display names for the three ENG201 instructors in the sample workbook. */
+/** @deprecated Prefer TARGET_COURSES — kept as the default course filter. */
+export const TARGET_COURSE: TargetCourse = 'ENG201';
+
+/** Demo display names for the three instructors in the sample workbook. */
 export const PROFESSOR_DISPLAY_NAMES: Record<string, string> = {
   'Professor A': 'Professor John Keating',
   'Professor B': 'Professor Henry Jones',
@@ -24,15 +28,22 @@ export function normalizeCourseCode(raw: string): string {
   return raw.replace(/\s+/g, '').toUpperCase();
 }
 
+/** Return the canonical course code if it is in scope, else null. */
+export function canonicalizeCourse(raw: string): TargetCourse | null {
+  const code = normalizeCourseCode(raw);
+  return (TARGET_COURSES as readonly string[]).includes(code)
+    ? (code as TargetCourse)
+    : null;
+}
+
 export function isTargetCourse(course: string): boolean {
-  return normalizeCourseCode(course) === TARGET_COURSE;
+  return canonicalizeCourse(course) !== null;
 }
 
 /**
- * Raw validated tables → typed StudentRow[]. Keeps only ENG201 rows (sheet
- * names or CSV Course values normalized). Handles the workbook's known quirk
- * that `Pass` may be "Yes"/"No" or "Y"/"N". Derived dimensions (age band,
- * score band) live in the metrics layer so each has exactly one definition.
+ * Raw validated tables → typed StudentRow[]. Keeps only ENG201 and MAT110
+ * rows. Handles the workbook's known quirk that `Pass` may be "Yes"/"No" or
+ * "Y"/"N". Derived dimensions live in the metrics layer.
  */
 export function normalizeTables(tables: RawTable[]): StudentRow[] {
   const rows: StudentRow[] = [];
@@ -46,7 +57,8 @@ export function normalizeTables(tables: RawTable[]): StudentRow[] {
         raw['Course'] !== undefined && raw['Course'] !== null && String(raw['Course']).trim() !== ''
           ? String(raw['Course']).trim()
           : table.course.trim();
-      if (!isTargetCourse(rawCourse)) {
+      const course = canonicalizeCourse(rawCourse);
+      if (!course) {
         dropped += 1;
         continue;
       }
@@ -56,7 +68,7 @@ export function normalizeTables(tables: RawTable[]): StudentRow[] {
       if (pass !== score >= 70) inconsistent += 1;
 
       rows.push({
-        course: TARGET_COURSE,
+        course,
         studentNum: Number(raw['Student #']),
         residency: String(raw['Dom/Inter']).trim() as StudentRow['residency'],
         gender: String(raw['F/M']).trim() as StudentRow['gender'],
@@ -80,14 +92,14 @@ export function normalizeTables(tables: RawTable[]): StudentRow[] {
   }
 
   if (inconsistent > 0 && import.meta.env?.DEV) {
-    // The workbook's pass threshold is Score >= 70; a mismatch is data worth
-    // knowing about but not worth rejecting an otherwise valid import over.
     console.warn(
       `normalize: ${inconsistent} row(s) where Pass contradicts Score >= 70`,
     );
   }
   if (dropped > 0 && import.meta.env?.DEV) {
-    console.info(`normalize: dropped ${dropped} non-${TARGET_COURSE} row(s)`);
+    console.info(
+      `normalize: dropped ${dropped} row(s) outside ${TARGET_COURSES.join(' / ')}`,
+    );
   }
 
   return rows;

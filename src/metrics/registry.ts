@@ -50,6 +50,7 @@ export interface MetricDef {
 
 const EVERY_DIM: (Dimension | 'none')[] = [
   'none',
+  'course',
   'year',
   'professor',
   'session',
@@ -138,7 +139,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     // Hero = A-range share; the composition itself renders as the chart.
     compute: (rows) => gradeBandShares(rows).find((b) => b.band === 'A')?.share ?? null,
     format: percent1,
-    allowedBreakdowns: ['none', 'session', 'year', 'professor'],
+    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'course'],
     defaultChart: 'pie',
   },
   genderGap: {
@@ -152,7 +153,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: (rows) => genderScoreGap(rows)?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
-    allowedBreakdowns: ['none', 'professor', 'session', 'year', 'major', 'ageBand'],
+    allowedBreakdowns: ['none', 'professor', 'course', 'session', 'year', 'major', 'ageBand'],
     defaultChart: 'divergingBar',
   },
   firstGenGap: {
@@ -166,7 +167,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: (rows) => demographicPassGap(rows, 'firstGen')?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
-    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'major'],
+    allowedBreakdowns: ['none', 'course', 'session', 'year', 'professor', 'major'],
     defaultChart: 'divergingBar',
   },
   pellGap: {
@@ -180,7 +181,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: (rows) => demographicPassGap(rows, 'pell')?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
-    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'major'],
+    allowedBreakdowns: ['none', 'course', 'session', 'year', 'professor', 'major'],
     defaultChart: 'divergingBar',
   },
   midBandShare: {
@@ -194,7 +195,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: midBandShare,
     format: percent1,
     target: { value: THRESHOLDS.midBandMin, label: '≥ 25%', direction: 'atLeast' },
-    allowedBreakdowns: ['none', 'professor', 'session', 'year'],
+    allowedBreakdowns: ['none', 'professor', 'course', 'session', 'year'],
     defaultChart: 'bars',
     higherIsBetter: true,
   },
@@ -208,7 +209,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
       'How many students look like they may need help soon, based on scores and known risk patterns. Lower is better.',
     compute: (rows) => flagStudents(rows).counts.total,
     format: countFmt,
-    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'ageBand', 'major'],
+    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'course', 'ageBand', 'major'],
     defaultChart: 'bars',
     higherIsBetter: false,
   },

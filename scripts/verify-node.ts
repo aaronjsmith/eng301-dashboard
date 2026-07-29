@@ -31,7 +31,7 @@ validateTables(tables);
 const rows = normalizeTables(tables);
 const courses = [...new Set(rows.map((r) => r.course))];
 console.log(
-  `XLSX import: ${rows.length} ENG201 rows from ${tables.length} sheets (kept courses: ${courses.join(', ') || 'none'})`,
+  `XLSX import: ${rows.length} rows from ${tables.length} sheets (kept courses: ${courses.join(', ') || 'none'})`,
 );
 const xlsxOk = runSelfTest(rows);
 

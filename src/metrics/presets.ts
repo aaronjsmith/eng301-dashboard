@@ -20,7 +20,7 @@ import { THRESHOLDS } from './thresholds';
  * computed the same way every time. Panel order K1–K4 then R1–R4 per the
  * spec's mapping table; K5 is computed but off-panel (Highlights surfaces it
  * on breach). KRI breaches are 'critical'; KPI target misses are 'notable'.
- * Scoped to ENG201 (the only course loaded).
+ * Scoped to the global filter (default ENG201; Course chip can include MAT110).
  */
 
 function buildPresets(scopeRows: StudentRow[]): PresetValue[] {

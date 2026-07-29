@@ -4,7 +4,8 @@ import type { FilterState, ModuleConfig } from '../types';
  * Default module layout + the three ready-made bundles (Overview / Course
  * Detail / Equity), addable from the new-module slot as starting layouts.
  * Bundle module ids are templates — WorkspaceContext regenerates them on add
- * so instances stay unique. All bundles are ENG201-scoped.
+ * so instances stay unique. Default scope is ENG201; Course filter can widen
+ * to MAT110 or All.
  */
 
 export const DEFAULT_MODULES: ModuleConfig[] = [
@@ -72,7 +73,7 @@ export const BUNDLES: ModuleBundle[] = [
   {
     id: 'bundle-overview',
     label: 'Overview',
-    description: 'Big-picture ENG201 view: pass rate, DFW, scores by term, and enrollment.',
+    description: 'Big-picture view: pass rate, DFW, scores by term, and enrollment.',
     modules: [
       {
         id: 'ov-pass',
@@ -119,7 +120,7 @@ export const BUNDLES: ModuleBundle[] = [
   {
     id: 'bundle-course-detail',
     label: 'Course detail',
-    description: 'Look closer at ENG201: grades, terms, and students who may need help.',
+    description: 'Look closer at one course: grades, terms, and students who may need help.',
     modules: [
       {
         id: 'cd-pass',
@@ -178,7 +179,7 @@ export const BUNDLES: ModuleBundle[] = [
     id: 'bundle-equity',
     label: 'Fairness gaps',
     description:
-      'Shows ENG201 gaps between groups (like gender or first-gen). Warns when a gap is bigger than 5 points.',
+      'Shows gaps between groups (like gender or first-gen). Warns when a gap is bigger than 5 points.',
     modules: [
       {
         id: 'eq-gender-session',
@@ -227,8 +228,8 @@ export const BUNDLES: ModuleBundle[] = [
 
 /**
  * The global scope a fresh workspace starts with: ENG201, current year (so
- * single-year presets/highlights match the verified numbers). Course is
- * locked in the filter bar; this keeps selectRows honest if anything widens.
+ * single-year presets/highlights match the verified numbers). Use the Course
+ * chip to switch to MAT110 or All.
  */
 export const DEFAULT_GLOBAL_FILTERS: FilterState = {
   course: ['ENG201'],

@@ -83,7 +83,7 @@ export interface SyncStatus {
 /**
  * Filterable/breakdown dimensions (FR5). Values are the strings produced by
  * dimensionValue(). `course` and `courseLevel` remain in the union for saved
- * configs / sanitize, but are not offered in ENG201-only UI (single course).
+ * configs / sanitize. Course breakdown is offered when the scope has 2+ courses.
  */
 export type Dimension =
   | 'course'

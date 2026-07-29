@@ -10,7 +10,12 @@ import {
 } from 'react';
 import type { SourceMeta, StudentRow, SyncStatus } from '../types';
 import { loadDashboardData } from '../data/loadData';
-import { isTargetCourse, TARGET_COURSE, displayProfessorName } from '../data/normalize';
+import {
+  canonicalizeCourse,
+  displayProfessorName,
+  isTargetCourse,
+  TARGET_COURSES,
+} from '../data/normalize';
 import { isStale, readCachedData, writeCachedData } from '../data/cache';
 import { runSelfTest } from '../metrics/selftest';
 import { useRole } from './RoleContext';
@@ -23,21 +28,25 @@ import { useRole } from './RoleContext';
  * baselines only ("my sections vs. course average") — never rendered as rows.
  */
 
-/** Drop pre-ENG201-only cache rows so a stale browser cache cannot widen scope. */
-function eng201Only(rows: StudentRow[]): StudentRow[] {
+/** Keep only in-scope courses and remap professor display names from cache. */
+function scopedCoursesOnly(rows: StudentRow[]): StudentRow[] {
   return rows
     .filter((r) => isTargetCourse(r.course))
-    .map((r) => ({
-      ...r,
-      course: TARGET_COURSE,
-      professor: displayProfessorName(r.professor),
-    }));
+    .map((r) => {
+      const course = canonicalizeCourse(r.course) ?? r.course;
+      return {
+        ...r,
+        course,
+        professor: displayProfessorName(r.professor),
+      };
+    });
 }
 
-function eng201Meta(meta: SourceMeta, rows: StudentRow[]): SourceMeta {
+function scopedMeta(meta: SourceMeta, rows: StudentRow[]): SourceMeta {
+  const courses = [...new Set(rows.map((r) => r.course))].sort();
   return {
     ...meta,
-    courses: [TARGET_COURSE],
+    courses: courses.length > 0 ? courses : [...TARGET_COURSES],
     rowCount: rows.length,
   };
 }
@@ -92,13 +101,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const cached = readCachedData();
     if (cached) {
-      const rows = eng201Only(cached.rows);
-      const meta = eng201Meta(cached.meta, rows);
+      const rows = scopedCoursesOnly(cached.rows);
+      const meta = scopedMeta(cached.meta, rows);
+      const cachedCourses = new Set(rows.map((r) => r.course));
+      const missingCourse = TARGET_COURSES.some((c) => !cachedCourses.has(c));
       setRows(rows);
       setMeta(meta);
       setStatus({ state: 'synced', meta });
       if (import.meta.env.DEV) runSelfTest(rows);
-      // Re-write cache if we trimmed non-ENG201 rows or remapped professors.
+      // Re-write cache if course scope or professor names changed.
       const remapped = rows.some(
         (r, i) =>
           r.course !== cached.rows[i]?.course ||
@@ -107,8 +118,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (rows.length !== cached.rows.length || remapped) {
         writeCachedData({ rows, meta });
       }
-      // FR2 staleness: older than 24 h ⇒ re-run the same pipeline on load.
-      if (isStale(cached.meta)) void runImport('auto');
+      // Older ENG201-only caches lack MAT110 — pull a fresh bundled import.
+      if (missingCourse || isStale(cached.meta)) void runImport('auto');
     } else {
       void runImport('auto');
     }

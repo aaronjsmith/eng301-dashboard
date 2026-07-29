@@ -15,11 +15,11 @@ const TC01_STEPS = [
   {
     action: 'Read status bar.',
     expected:
-      'Data source Static Tables-2.xlsx (ENG 201 rows only), last-sync time, Viewing as Faculty Professor John Keating.',
+      'Data source Static Tables-2.xlsx (ENG 201 and MAT 110), last-sync time, Viewing as Faculty Professor John Keating.',
   },
   {
     action: 'Check filter chips.',
-    expected: 'Year 2026 selected by default; no Course chip (ENG 201 only).',
+    expected: 'Course ENG 201 and Year 2026 are selected by default; MAT 110 and All are available.',
   },
   {
     action: 'Review Presets panel.',

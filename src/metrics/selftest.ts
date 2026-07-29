@@ -17,7 +17,7 @@ import { groupBy } from './scope';
  * Dev-only self-test (spec Phase-2 verification): asserts the engine against
  * the workbook numbers verified during planning. Runs on every dev load after
  * a successful import; a red row here means a formula regressed.
- * Expects ENG201-only rows (normalize drops every other course).
+ * Expects ENG201 + MAT110 rows (normalize drops every other course).
  */
 
 interface Check {
@@ -33,16 +33,18 @@ export function runSelfTest(rows: StudentRow[]): boolean {
   const cur = rows.filter((r) => r.year === 2026);
   const prior = rows.filter((r) => r.year === 2025);
   const eng201 = cur.filter((r) => r.course === 'ENG201');
+  const mat110 = cur.filter((r) => r.course === 'MAT110');
   const profOf = (name: string) => eng201.filter((r) => r.professor === name);
 
   const checks: Check[] = [];
   const push = (name: string, expected: number, actual: number | null | undefined, tolerance = 0.06) =>
     checks.push({ name, expected, actual, tolerance });
 
-  // Row counts (ENG201-only import)
-  push('total rows (2026)', 444, cur.length, 0);
+  // Row counts (ENG201 + MAT110)
+  push('total rows (2026)', 985, cur.length, 0);
   push('ENG201 rows', 444, eng201.length, 0);
-  push('only ENG201 courses', 1, new Set(rows.map((r) => r.course)).size, 0);
+  push('MAT110 rows', 541, mat110.length, 0);
+  push('allowed courses', 2, new Set(rows.map((r) => r.course)).size, 0);
 
   // K1/K2
   const k1 = passRate(eng201);
@@ -112,11 +114,13 @@ export function runSelfTest(rows: StudentRow[]): boolean {
   push('BUS majors n', 51, bus?.n, 0);
   push('DT majors n (small cell)', 11, eng201.filter((r) => r.major === 'DT').length, 0);
 
-  // ── 2025 cohort (ENG201 only) ───────────────────────────────────────────
+  // ── 2025 cohort (ENG201 + MAT110) ───────────────────────────────────────
   if (prior.length > 0) {
     const p201 = prior.filter((r) => r.course === 'ENG201');
-    push('2025 rows total', 400, prior.length, 0);
+    const p110 = prior.filter((r) => r.course === 'MAT110');
+    push('2025 rows total', 887, prior.length, 0);
     push('2025 ENG201 rows', 400, p201.length, 0);
+    push('2025 MAT110 rows', 487, p110.length, 0);
     push('2025 ENG201 pass rate', 86.8, passRate(p201)?.rate, 0.1);
     // Persistent pattern: first-gen gap breached in 2025 too.
     push('2025 ENG201 1st-gen gap', -16.0, demographicPassGap(p201, 'firstGen')?.gap, 0.1);
