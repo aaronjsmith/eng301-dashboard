@@ -1,8 +1,47 @@
 /* Shared chart shell: hero block, legend, tooltip, empty state. */
 
+/* Height flows top-down: .frame → .markArea → .host → .plot (measured).
+   min-height: 0 at every flex link keeps the imposed height authoritative,
+   so the ResizeObserver never feeds its own output back as content growth. */
+.frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.markArea {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .host {
   position: relative;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Column flex + centered: charts whose content height caps below the region
+   (few rows/cells) float centered instead of pinning to the top edge. */
+.plot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .svg {

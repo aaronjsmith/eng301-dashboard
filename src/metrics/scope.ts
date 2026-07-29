@@ -35,6 +35,8 @@ export function dimensionValue(row: StudentRow, dim: Dimension): string {
       return row.course;
     case 'courseLevel':
       return courseLevelOf(row.course);
+    case 'year':
+      return String(row.year);
     case 'session':
       return row.session;
     case 'professor':
@@ -78,6 +80,9 @@ export const DIMENSION_META: Record<Dimension, DimensionMeta> = {
     values: ['100-level', '200-level'],
     filterable: false,
   },
+  // Global-bar-owned like `course` (excluded from module popups in
+  // availability.ts); string sort orders years chronologically.
+  year: { id: 'year', label: 'Year', filterable: true },
   session: {
     id: 'session',
     label: 'Session',

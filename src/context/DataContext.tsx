@@ -31,6 +31,8 @@ interface DataContextValue {
   loadFromFile: (file: File) => void;
   /** All professors present in the data (for the faculty picker). */
   professors: string[];
+  /** All academic years present in the data (for the global Year chips). */
+  years: string[];
   ready: boolean;
 }
 
@@ -98,6 +100,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     [rows],
   );
 
+  const years = useMemo(
+    () => (rows ? [...new Set(rows.map((r) => String(r.year)))].sort() : []),
+    [rows],
+  );
+
   const value = useMemo<DataContextValue>(
     () => ({
       scopedRows,
@@ -107,9 +114,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       sync,
       loadFromFile,
       professors,
+      years,
       ready: rows !== null,
     }),
-    [scopedRows, rows, meta, status, sync, loadFromFile, professors],
+    [scopedRows, rows, meta, status, sync, loadFromFile, professors, years],
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

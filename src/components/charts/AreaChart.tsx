@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { SizeTier } from '../../types';
 import type { ChartData } from '../../metrics/chartData';
 import {
@@ -5,7 +6,7 @@ import {
   CHART_FONT,
   MARK,
   niceTicks,
-  useMeasuredWidth,
+  useMeasuredSize,
   useTooltip,
 } from './common';
 import styles from './Chart.module.css';
@@ -22,13 +23,22 @@ interface AreaChartProps {
  * module has an ordered axis (availability.ts).
  */
 export function AreaChart({ data, size }: AreaChartProps) {
-  const [hostRef, measured] = useMeasuredWidth<HTMLDivElement>();
+  const [plotRef, measured] = useMeasuredSize<HTMLDivElement>();
   const { tip, show, hide, hostRef: tipHost } = useTooltip();
+  // Per-instance gradient id (several charts share the page); no colons —
+  // useId's ":r1:" form breaks url(#…) references.
+  const gradId = `area-fill-${useId().replace(/:/g, '')}`;
+  const setPlotRef = (el: HTMLDivElement | null) => {
+    plotRef.current = el;
+    tipHost.current = el;
+  };
 
-  const width = measured || 240;
-  const plotH = size === 'S' ? 46 : size === 'M' ? 104 : 144;
+  const width = measured.width || 240;
+  // Old per-tier constants floor the measured plot height.
+  const minPlotH = size === 'S' ? 46 : size === 'M' ? 116 : 144;
   const axisBand = size === 'S' ? 0 : 16;
   const topPad = size === 'S' ? 4 : 14;
+  const plotH = Math.max(minPlotH, measured.height - topPad - axisBand);
   const height = topPad + plotH + axisBand;
   const sidePad = 10;
 
@@ -60,8 +70,8 @@ export function AreaChart({ data, size }: AreaChartProps) {
     };
 
     return (
-      <div className={styles.host} ref={hostRef} data-chart="area">
-        <div ref={tipHost} style={{ position: 'relative' }}>
+      <div className={styles.host} data-chart="area">
+        <div ref={setPlotRef} className={styles.plot}>
           <svg className={styles.svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label={data.metricLabel}>
             {Array.from({ length: bandCount }, (_, b) => (
               <path
@@ -96,7 +106,7 @@ export function AreaChart({ data, size }: AreaChartProps) {
                   key={s.label}
                   x={x(i)}
                   y={height - 4}
-                  textAnchor="middle"
+                  textAnchor={i === 0 ? 'start' : i === stacks.length - 1 ? 'end' : 'middle'}
                   fontSize={CHART_FONT.axis}
                   fill="var(--text-muted)"
                 >
@@ -141,8 +151,8 @@ export function AreaChart({ data, size }: AreaChartProps) {
   const last = points[points.length - 1];
 
   return (
-    <div className={styles.host} ref={hostRef} data-chart="area">
-      <div ref={tipHost} style={{ position: 'relative' }}>
+    <div className={styles.host} data-chart="area">
+      <div ref={setPlotRef} className={styles.plot}>
         <svg className={styles.svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label={data.metricLabel}>
           {size === 'L' &&
             niceTicks(maxValue).map((t) => (
@@ -156,7 +166,15 @@ export function AreaChart({ data, size }: AreaChartProps) {
                 strokeWidth={1}
               />
             ))}
-          <path d={areaPath} fill="var(--chart-2)" opacity={0.1} />
+          <defs>
+            {/* Real area-chart affordance: strong at the line, fading to the
+                axis — a flat 10% wash disappeared on tall dark-mode plots. */}
+            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--chart-2)" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="var(--chart-2)" stopOpacity={0.04} />
+            </linearGradient>
+          </defs>
+          <path d={areaPath} fill={`url(#${gradId})`} />
           <path
             d={linePath}
             fill="none"
@@ -205,7 +223,7 @@ export function AreaChart({ data, size }: AreaChartProps) {
                 key={p.key}
                 x={x(i)}
                 y={height - 4}
-                textAnchor="middle"
+                textAnchor={i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle'}
                 fontSize={CHART_FONT.axis}
                 fill="var(--text-muted)"
               >

@@ -1,6 +1,6 @@
 import type { SizeTier } from '../../types';
 import type { ChartData } from '../../metrics/chartData';
-import { CHART_FONT, MARK, shortLabel, useMeasuredWidth, useTooltip } from './common';
+import { CHART_FONT, MARK, clampNum, shortLabel, useMeasuredSize, useTooltip } from './common';
 import styles from './Chart.module.css';
 
 interface DivergingBarChartProps {
@@ -15,8 +15,12 @@ interface DivergingBarChartProps {
  * critical status color (meaning, not decoration).
  */
 export function DivergingBarChart({ data, size }: DivergingBarChartProps) {
-  const [hostRef, measured] = useMeasuredWidth<HTMLDivElement>();
+  const [plotRef, measured] = useMeasuredSize<HTMLDivElement>();
   const { tip, show, hide, hostRef: tipHost } = useTooltip();
+  const setPlotRef = (el: HTMLDivElement | null) => {
+    plotRef.current = el;
+    tipHost.current = el;
+  };
 
   const points =
     data.points.length > 0
@@ -41,11 +45,20 @@ export function DivergingBarChart({ data, size }: DivergingBarChartProps) {
     return <div className={styles.empty}>Gap not computable in this scope</div>;
   }
 
-  const width = measured || 240;
+  const width = measured.width || 240;
   const labelW = size === 'S' ? 0 : 86;
-  const rowH = size === 'S' ? 14 : 24;
   const topPad = size === 'S' ? 2 : 6;
   const axisBand = size === 'S' ? 0 : 15;
+  // Rows stretch into free card height; the old per-tier constant floors.
+  const minRowH = size === 'S' ? 14 : size === 'M' ? 24 : 28;
+  const barThick = size === 'S' ? 8 : size === 'M' ? 14 : 16;
+  const rowH = clampNum(
+    measured.height
+      ? (measured.height - topPad - axisBand) / visible.length
+      : minRowH,
+    minRowH,
+    34,
+  );
   const height = topPad + visible.length * rowH + axisBand;
   const plotW = width - labelW - 8;
   const cx = labelW + plotW / 2;
@@ -57,8 +70,8 @@ export function DivergingBarChart({ data, size }: DivergingBarChartProps) {
   const x = (v: number) => cx + (v / maxAbs) * (plotW / 2 - 30);
 
   return (
-    <div className={styles.host} ref={hostRef} data-chart="diverging">
-      <div ref={tipHost} style={{ position: 'relative' }}>
+    <div className={styles.host} data-chart="diverging">
+      <div ref={setPlotRef} className={styles.plot}>
         <svg className={styles.svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label={data.metricLabel}>
           {/* zero axis */}
           <line
@@ -133,9 +146,9 @@ export function DivergingBarChart({ data, size }: DivergingBarChartProps) {
                   <>
                     <rect
                       x={barX}
-                      y={y + (rowH - (size === 'S' ? 8 : 14)) / 2}
+                      y={y + (rowH - barThick) / 2}
                       width={Math.max(barW, 2)}
-                      height={size === 'S' ? 8 : 14}
+                      height={barThick}
                       rx={MARK.radius / 2}
                       fill={breached ? 'var(--status-critical)' : 'var(--chart-2)'}
                     >

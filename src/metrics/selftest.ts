@@ -28,8 +28,12 @@ interface Check {
 }
 
 export function runSelfTest(rows: StudentRow[]): boolean {
-  const eng201 = rows.filter((r) => r.course === 'ENG201');
-  const eng101 = rows.filter((r) => r.course === 'ENG101');
+  // The 39 original spec numbers hold on the CURRENT-YEAR subset; the 2025
+  // cohort has its own structural checks below (values from the generator).
+  const cur = rows.filter((r) => r.year === 2026);
+  const prior = rows.filter((r) => r.year === 2025);
+  const eng201 = cur.filter((r) => r.course === 'ENG201');
+  const eng101 = cur.filter((r) => r.course === 'ENG101');
   const profOf = (name: string) => eng201.filter((r) => r.professor === name);
 
   const checks: Check[] = [];
@@ -37,7 +41,7 @@ export function runSelfTest(rows: StudentRow[]): boolean {
     checks.push({ name, expected, actual, tolerance });
 
   // Row counts
-  push('total rows', 1698, rows.length, 0);
+  push('total rows (2026)', 1698, cur.length, 0);
   push('ENG201 rows', 444, eng201.length, 0);
 
   // K1/K2
@@ -46,8 +50,8 @@ export function runSelfTest(rows: StudentRow[]): boolean {
   push('K1 ENG201 passed', 382, k1?.passed, 0);
   push('K2 ENG201 mean score', 81.2, meanScore(eng201));
 
-  // K3 (all courses)
-  const k3 = dfwByLevel(rows);
+  // K3 (all courses, current year)
+  const k3 = dfwByLevel(cur);
   push('K3 100-level DFW', 21.0, k3.level100?.rate);
   push('K3 200-level DFW', 14.4, k3.level200?.rate);
 
@@ -73,8 +77,8 @@ export function runSelfTest(rows: StudentRow[]): boolean {
 
   // R2 — Professor B bimodality
   push('R2 Prof B mid-band', 0, midBandShare(profOf('Professor B')), 0.01);
-  const bFailsAll = rows.filter((r) => r.professor === 'Professor B' && !r.pass).length;
-  const failsAll = rows.filter((r) => !r.pass).length;
+  const bFailsAll = cur.filter((r) => r.professor === 'Professor B' && !r.pass).length;
+  const failsAll = cur.filter((r) => !r.pass).length;
   push('R2 Prof B fails (all courses)', 137, bFailsAll, 0);
   push('R2 total fails (all courses)', 309, failsAll, 0);
   push('R2 Prof B ENG201 pass rate', 81.4, passRate(profOf('Professor B'))?.rate);
@@ -114,6 +118,36 @@ export function runSelfTest(rows: StudentRow[]): boolean {
   push('BUS majors pass', 78.4, bus?.rate);
   push('BUS majors n', 51, bus?.n, 0);
   push('DT majors n (small cell)', 11, eng201.filter((r) => r.major === 'DT').length, 0);
+
+  // ── 2025 cohort (values from generate_scenario_data.py's report_prior) ──
+  if (prior.length > 0) {
+    const p201 = prior.filter((r) => r.course === 'ENG201');
+    push('2025 rows total', 1529, prior.length, 0);
+    push('2025 ENG101 rows', 396, prior.filter((r) => r.course === 'ENG101').length, 0);
+    push('2025 ENG201 rows', 400, p201.length, 0);
+    push('2025 MAT110 rows', 487, prior.filter((r) => r.course === 'MAT110').length, 0);
+    push('2025 MAT252 rows', 246, prior.filter((r) => r.course === 'MAT252').length, 0);
+    push('2025 ENG201 pass rate', 86.8, passRate(p201)?.rate, 0.1);
+    // Persistent pattern: first-gen gap breached in 2025 too.
+    push('2025 ENG201 1st-gen gap', -16.0, demographicPassGap(p201, 'firstGen')?.gap, 0.1);
+    // Scenarios absent in 2025: Prof A gap small, Prof B mid-band healthy,
+    // no 18–21×Summer effect (structural, tolerance = the alert threshold).
+    push(
+      '2025 Prof A gender gap ≈ 0',
+      0,
+      genderScoreGap(p201.filter((r) => r.professor === 'Professor A'))?.gap,
+      5,
+    );
+    push(
+      '2025 Prof B mid-band healthy',
+      76.4,
+      midBandShare(p201.filter((r) => r.professor === 'Professor B')),
+      0.1,
+    );
+    const r3p = ageSessionRisk(p201);
+    push('2025 summer-age pass gap ≈ 0', 0, r3p.passGap, 5);
+    push('2025 summer-age score gap ≈ 0', 0, r3p.scoreGap, 5);
+  }
 
   const results = checks.map((c) => {
     const pass =

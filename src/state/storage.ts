@@ -4,7 +4,9 @@
  * a stale workspace never blocks the app from booting.
  */
 
-const PREFIX = 'dashproto.v1.';
+// v2: multi-year data — old v1 workspace (no year scope) and cached rows
+// (no .year field) are intentionally orphaned so nothing mixes cohorts.
+const PREFIX = 'dashproto.v2.';
 
 export function readStored<T>(key: string, fallback: T): T {
   try {

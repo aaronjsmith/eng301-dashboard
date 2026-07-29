@@ -6,6 +6,7 @@ import { PieChart } from './PieChart';
 import { AreaChart } from './AreaChart';
 import { HeatmapChart } from './HeatmapChart';
 import { DivergingBarChart } from './DivergingBarChart';
+import { Tip } from '../ui/Tip';
 import styles from './Chart.module.css';
 
 interface ChartProps {
@@ -30,12 +31,22 @@ export function Chart({ type, size, data }: ChartProps) {
         {data.hero.formatted}
       </span>
       {data.status !== 'ok' && (
-        <span className={styles.heroStatus} data-status={data.status}>
-          <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
-            <circle cx="5" cy="5" r="4" fill="currentColor" />
-          </svg>
-          {data.status === 'critical' ? 'Breach' : 'Off target'}
-        </span>
+        <Tip
+          content={{
+            title: data.status === 'critical' ? 'Breach' : 'Off target',
+            body:
+              data.status === 'critical'
+                ? 'The current value crosses the critical threshold for this metric.'
+                : 'The current value misses this metric’s target, within the notable band.',
+          }}
+        >
+          <span className={styles.heroStatus} data-status={data.status}>
+            <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true">
+              <circle cx="5" cy="5" r="4" fill="currentColor" />
+            </svg>
+            {data.status === 'critical' ? 'Breach' : 'Off target'}
+          </span>
+        </Tip>
       )}
     </div>
   );
@@ -58,12 +69,12 @@ export function Chart({ type, size, data }: ChartProps) {
   })();
 
   return (
-    <div>
+    <div className={styles.frame}>
       {heroRow}
       {type !== 'donut' && size === 'S' && (
         <p className={styles.heroSub}>{data.hero.sub}</p>
       )}
-      {mark}
+      <div className={styles.markArea}>{mark}</div>
       {type !== 'donut' && size !== 'S' && (
         <p className={styles.heroSub}>{data.hero.sub}</p>
       )}

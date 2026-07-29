@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
+import type { SizeTier } from '../../types';
 
 /**
  * Shared chart plumbing. Semantic zoom is tier-conditional COMPOSITION:
- * marks and type sizes are constants here; a bigger tier adds marks and
- * labels, never scales them (spec §4).
+ * type sizes are constants here; a bigger tier adds marks and labels rather
+ * than scaling text. Plot GEOMETRY, however, stretches to fill the card —
+ * the per-tier ladders below act as minimum floors, not fixed heights.
  */
 
 /** Fixed type scale — never grows with the box. */
@@ -16,32 +18,59 @@ export const CHART_FONT = {
 } as const;
 
 export const MARK = {
-  barMax: 24, // bars never thicker than this (dataviz mark spec)
   line: 2,
   gap: 2, // surface gap between touching fills
   radius: 4, // rounded data-end
 } as const;
 
-/** Measure the rendered width of a chart host (constant font discipline). */
-export function useMeasuredWidth<T extends HTMLElement>(): [RefObject<T | null>, number] {
+/** Bar thickness cap per tier — wider cards earn thicker bars (dataviz mark spec). */
+export const BAR_MAX: Record<SizeTier, number> = { S: 24, M: 40, L: 52 };
+
+export interface MeasuredSize {
+  width: number;
+  height: number;
+}
+
+/**
+ * Measure the rendered box of a chart plot region. Both dimensions carry a
+ * >1px epsilon guard so sub-pixel ResizeObserver jitter never re-renders.
+ * {0,0} until the first observation — callers fall back to their floors.
+ */
+export function useMeasuredSize<T extends HTMLElement>(): [
+  RefObject<T | null>,
+  MeasuredSize,
+] {
   const ref = useRef<T | null>(null);
-  const [width, setWidth] = useState(0);
+  const [size, setSize] = useState<MeasuredSize>({ width: 0, height: 0 });
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const observer = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width ?? 0;
-      setWidth((prev) => (Math.abs(prev - w) > 1 ? w : prev));
+      const rect = entries[0]?.contentRect;
+      if (!rect) return;
+      setSize((prev) =>
+        Math.abs(prev.width - rect.width) > 1 || Math.abs(prev.height - rect.height) > 1
+          ? { width: rect.width, height: rect.height }
+          : prev,
+      );
     });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  return [ref, width];
+  return [ref, size];
 }
 
-/** Clean axis ticks: 0 → a rounded max in `count` steps. */
+/** Clamp v into [min, max] (floors win when the box is tiny or unmeasured). */
+export function clampNum(v: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, v));
+}
+
+/**
+ * Clean axis ticks: 0 → a rounded max in `count` steps. The last tick always
+ * covers maxValue — scales dividing by ticks.at(-1) must never clip a bar.
+ */
 export function niceTicks(maxValue: number, count = 4): number[] {
   if (maxValue <= 0) return [0];
   const rough = maxValue / count;
@@ -49,8 +78,9 @@ export function niceTicks(maxValue: number, count = 4): number[] {
   const residual = rough / magnitude;
   const step =
     (residual > 5 ? 10 : residual > 2 ? 5 : residual > 1 ? 2 : 1) * magnitude;
+  const top = Math.ceil(maxValue / step - 0.001) * step;
   const ticks: number[] = [];
-  for (let v = 0; v <= maxValue + step * 0.001; v += step) ticks.push(v);
+  for (let v = 0; v <= top + step * 0.001; v += step) ticks.push(v);
   return ticks;
 }
 

@@ -1,7 +1,7 @@
 import type { SizeTier } from '../../types';
 import type { ChartData } from '../../metrics/chartData';
 import { THRESHOLDS } from '../../metrics/thresholds';
-import { CHART_FONT, inkForBin, useMeasuredWidth, useTooltip } from './common';
+import { CHART_FONT, clampNum, inkForBin, useMeasuredSize, useTooltip } from './common';
 import styles from './Chart.module.css';
 
 interface HeatmapChartProps {
@@ -23,8 +23,12 @@ const BIN_TOKENS = [
  * encoding; suppressed cells hatch as "n<20".
  */
 export function HeatmapChart({ data, size }: HeatmapChartProps) {
-  const [hostRef, measured] = useMeasuredWidth<HTMLDivElement>();
+  const [plotRef, measured] = useMeasuredSize<HTMLDivElement>();
   const { tip, show, hide, hostRef: tipHost } = useTooltip();
+  const setPlotRef = (el: HTMLDivElement | null) => {
+    plotRef.current = el;
+    tipHost.current = el;
+  };
   const matrix = data.matrix;
 
   if (!matrix) {
@@ -35,11 +39,19 @@ export function HeatmapChart({ data, size }: HeatmapChartProps) {
     );
   }
 
-  const width = measured || 260;
+  const width = measured.width || 260;
   const labelW = size === 'S' ? 0 : 64;
   const headerH = size === 'S' ? 0 : 16;
-  const cellH = size === 'S' ? 18 : 30;
   const gap = 2;
+  // Cells stretch into free card height; the old per-tier constant floors.
+  const minCellH = size === 'S' ? 18 : size === 'M' ? 30 : 34;
+  const cellH = clampNum(
+    measured.height
+      ? (measured.height - headerH) / matrix.rowLabels.length - gap
+      : minCellH,
+    minCellH,
+    44,
+  );
   const cols = matrix.colLabels.length;
   const cellW = Math.max((width - labelW - gap * (cols - 1)) / cols, 24);
   const height = headerH + matrix.rowLabels.length * (cellH + gap);
@@ -47,8 +59,8 @@ export function HeatmapChart({ data, size }: HeatmapChartProps) {
   const binLabels = [`<${b1}`, `${b1}–${b2}`, `${b2}–${b3}`, `≥${b3}`];
 
   return (
-    <div className={styles.host} ref={hostRef} data-chart="heatmap">
-      <div ref={tipHost} style={{ position: 'relative' }}>
+    <div className={styles.host} data-chart="heatmap">
+      <div ref={setPlotRef} className={styles.plot}>
         <svg className={styles.svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label={data.metricLabel}>
           {size !== 'S' &&
             matrix.colLabels.map((col, c) => (

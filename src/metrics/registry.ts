@@ -29,11 +29,11 @@ export type MetricUnit = 'percent' | 'points' | 'count' | 'score';
 export interface MetricDef {
   id: MetricId;
   label: string;
-  /** Plain-English “what is this?” for module help text. */
-  description: string;
   kind: 'kpi' | 'kri';
   indicator: IndicatorKind;
   unit: MetricUnit;
+  /** Plain-language explanation (incl. abbreviations) — shown in hover tooltips. */
+  description: string;
   /** Hero value for a population; null = not computable (empty/one-sided). */
   compute(rows: StudentRow[]): number | null;
   format(value: number): string;
@@ -50,6 +50,7 @@ export interface MetricDef {
 
 const EVERY_DIM: (Dimension | 'none')[] = [
   'none',
+  'year',
   'professor',
   'session',
   'gender',
@@ -68,11 +69,11 @@ export const METRICS: Record<MetricId, MetricDef> = {
   passRate: {
     id: 'passRate',
     label: 'Pass rate',
-    description:
-      'What share of students passed. Higher is better. The goal is at least 85 out of every 100 students.',
     kind: 'kpi',
     indicator: 'lagging',
     unit: 'percent',
+    description:
+      'Share of students in scope who passed the course. Lagging outcome measure; target ≥ 85%.',
     compute: (rows) => passRate(rows)?.rate ?? null,
     format: percent1,
     target: { value: THRESHOLDS.passRateTarget, label: '≥ 85%', direction: 'atLeast' },
@@ -83,11 +84,11 @@ export const METRICS: Record<MetricId, MetricDef> = {
   dfwRate: {
     id: 'dfwRate',
     label: 'DFW rate',
-    description:
-      'DFW means D, F, or Withdraw. This is the share of students who did not finish with a C− or better. Lower is better.',
     kind: 'kpi',
     indicator: 'lagging',
     unit: 'percent',
+    description:
+      'DFW = D, F, or Withdrawal — the share of students who did not complete the course successfully. Lower is better; target ≤ 15%.',
     compute: (rows) => dfwRate(rows)?.rate ?? null,
     format: percent1,
     target: {
@@ -102,11 +103,11 @@ export const METRICS: Record<MetricId, MetricDef> = {
   avgScore: {
     id: 'avgScore',
     label: 'Average score',
-    description:
-      'The average numeric score for the students you are looking at. The goal is at least 80 (about a B−).',
     kind: 'kpi',
     indicator: 'lagging',
     unit: 'score',
+    description:
+      'Mean numeric course score (0–100) across students in scope. Target ≥ 80, roughly a B−.',
     compute: meanScore,
     format: score1,
     target: { value: THRESHOLDS.avgScoreTarget, label: '≥ 80 (B−)', direction: 'atLeast' },
@@ -117,11 +118,11 @@ export const METRICS: Record<MetricId, MetricDef> = {
   enrollment: {
     id: 'enrollment',
     label: 'Enrollment',
-    description:
-      'How many students are in the current view. Use this to see if a group is big enough to trust the other numbers.',
     kind: 'kpi',
     indicator: 'leading',
     unit: 'count',
+    description:
+      'Number of enrolled student records in the current scope. Leading indicator of demand and section capacity.',
     compute: (rows) => rows.length,
     format: countFmt,
     allowedBreakdowns: EVERY_DIM,
@@ -131,85 +132,85 @@ export const METRICS: Record<MetricId, MetricDef> = {
   gradeDist: {
     id: 'gradeDist',
     label: 'Grade distribution',
-    description:
-      'How grades are spread from A to F. The big number is the share of A-range grades. Use it to spot unusual grading patterns.',
     kind: 'kpi',
     indicator: 'lagging',
     unit: 'percent',
+    description:
+      'How grades spread across the A / B / C / D–F bands. The headline number is the A-range share.',
     // Hero = A-range share; the composition itself renders as the chart.
     compute: (rows) => gradeBandShares(rows).find((b) => b.band === 'A')?.share ?? null,
     format: percent1,
-    allowedBreakdowns: ['none', 'session', 'professor', 'course'],
+    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'course'],
     defaultChart: 'pie',
   },
   genderGap: {
     id: 'genderGap',
     label: 'Gender score gap (W − M)',
-    description:
-      'Average score for women minus average score for men. A gap larger than 5 points raises a warning that one group is behind.',
     kind: 'kri',
     indicator: 'lagging',
     unit: 'points',
+    description:
+      'Average score of women (W) minus men (M), in points. Positive = women score higher. Alert when the gap exceeds 5 pts either way.',
     compute: (rows) => genderScoreGap(rows)?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
-    allowedBreakdowns: ['none', 'professor', 'course', 'session', 'major', 'ageBand'],
+    allowedBreakdowns: ['none', 'professor', 'course', 'session', 'year', 'major', 'ageBand'],
     defaultChart: 'divergingBar',
   },
   firstGenGap: {
     id: 'firstGenGap',
     label: '1st-gen pass gap',
-    description:
-      'How much first-generation students’ pass rate differs from everyone else. Positive means first-gen students are ahead; negative means they are behind.',
     kind: 'kri',
     indicator: 'lagging',
     unit: 'points',
+    description:
+      'Pass rate of first-generation college students minus continuing-generation students, in points. Alert when the gap exceeds 5 pts either way.',
     compute: (rows) => demographicPassGap(rows, 'firstGen')?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
-    allowedBreakdowns: ['none', 'course', 'session', 'professor', 'major'],
+    allowedBreakdowns: ['none', 'course', 'session', 'year', 'professor', 'major'],
     defaultChart: 'divergingBar',
   },
   pellGap: {
     id: 'pellGap',
     label: 'Pell pass gap',
-    description:
-      'How much Pell Grant students’ pass rate differs from everyone else. Gaps over 5 points mean support may be needed.',
     kind: 'kri',
     indicator: 'lagging',
     unit: 'points',
+    description:
+      'Pass rate of Pell-eligible students (need-based federal aid) minus non-Pell students, in points. Alert when the gap exceeds 5 pts either way.',
     compute: (rows) => demographicPassGap(rows, 'pell')?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
-    allowedBreakdowns: ['none', 'course', 'session', 'professor', 'major'],
+    allowedBreakdowns: ['none', 'course', 'session', 'year', 'professor', 'major'],
     defaultChart: 'divergingBar',
   },
   midBandShare: {
     id: 'midBandShare',
     label: 'Mid-band grade share (70–89)',
-    description:
-      'Share of students scoring between 70 and 89. If this is very low, grades may be piled at the extremes (lots of highs and lows).',
     kind: 'kri',
     indicator: 'lagging',
     unit: 'percent',
+    description:
+      'Share of grades landing in the 70–89 mid band. A very low share signals all-or-nothing grading; target ≥ 25%.',
     compute: midBandShare,
     format: percent1,
     target: { value: THRESHOLDS.midBandMin, label: '≥ 25%', direction: 'atLeast' },
-    allowedBreakdowns: ['none', 'professor', 'course', 'session'],
+    allowedBreakdowns: ['none', 'professor', 'course', 'session', 'year'],
     defaultChart: 'bars',
     higherIsBetter: true,
   },
   atRisk: {
     id: 'atRisk',
     label: 'At-risk students',
-    description:
-      'How many students look like they may need help soon, based on scores and known risk patterns. Lower is better.',
     kind: 'kri',
     indicator: 'leading',
     unit: 'count',
+    description:
+      'Students flagged by preset thresholds: failing, marginal, or in a known risk slice. Leading warning signal — lower is better.',
     compute: (rows) => flagStudents(rows).counts.total,
     format: countFmt,
-    allowedBreakdowns: ['none', 'session', 'professor', 'course', 'ageBand', 'major'],
+    allowedBreakdowns: ['none', 'session', 'year', 'professor', 'course', 'ageBand', 'major'],
     defaultChart: 'bars',
     higherIsBetter: false,
   },

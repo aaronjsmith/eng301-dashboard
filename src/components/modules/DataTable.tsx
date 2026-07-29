@@ -35,6 +35,7 @@ export function DataTable({ data }: DataTableProps) {
               <tr>
                 <th>Student #</th>
                 <th>Course</th>
+                <th>Year</th>
                 <th>Session</th>
                 <th>Score</th>
                 <th>Grade</th>
@@ -43,9 +44,13 @@ export function DataTable({ data }: DataTableProps) {
             </thead>
             <tbody>
               {data.tableRows.map(({ row, flag }) => (
-                <tr key={`${row.course}-${row.studentNum}`} data-flag={flag ?? 'none'}>
+                <tr
+                  key={`${row.course}-${row.studentNum}-${row.year}`}
+                  data-flag={flag ?? 'none'}
+                >
                   <td>{row.studentNum}</td>
                   <td>{row.course}</td>
+                  <td>{row.year}</td>
                   <td>{row.session}</td>
                   <td>{row.score}</td>
                   <td>{row.grade}</td>

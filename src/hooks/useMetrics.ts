@@ -21,6 +21,10 @@ export interface DashboardScope {
   scopeRows: StudentRow[];
   /** Role scope ∩ global filters minus course — cross-course rules (K3 etc.). */
   crossCourseRows: StudentRow[];
+  /** Role scope ∩ global filters minus year — year-crossing baselines/trends. */
+  yearAgnosticRows: StudentRow[];
+  /** Role scope ∩ global minus year AND course — K3's prior-year equivalent. */
+  yearAgnosticCrossCourseRows: StudentRow[];
   /** ALL rows — aggregate comparison baselines only (faculty exception). */
   baselineRows: StudentRow[];
 }
@@ -31,10 +35,19 @@ export function useDashboardScope(): DashboardScope {
 
   return useMemo(() => {
     const { course: _course, ...withoutCourse } = globalFilters;
+    const { year: _year, ...withoutYear } = globalFilters;
+    const { year: _y2, course: _c2, ...withoutYearCourse } = globalFilters;
     return {
       scopeRows: selectRows(scopedRows, globalFilters),
       crossCourseRows: selectRows(scopedRows, withoutCourse),
-      baselineRows,
+      yearAgnosticRows: selectRows(scopedRows, withoutYear),
+      yearAgnosticCrossCourseRows: selectRows(scopedRows, withoutYearCourse),
+      // Aggregate-baseline exception stays unscoped by role/course/professor,
+      // but the year cohort boundary applies — a 2026 card never compares
+      // against a 2025+2026 blend.
+      baselineRows: globalFilters.year
+        ? selectRows(baselineRows, { year: globalFilters.year })
+        : baselineRows,
     };
   }, [scopedRows, baselineRows, globalFilters]);
 }
@@ -42,15 +55,30 @@ export function useDashboardScope(): DashboardScope {
 /** Presets visible to the current role, panel rows only (K5 stays off-panel). */
 export function usePresets(): { panel: PresetValue[]; all: PresetValue[] } {
   const { role } = useRole();
-  const { scopeRows, crossCourseRows } = useDashboardScope();
+  const { scopeRows, crossCourseRows, yearAgnosticRows, yearAgnosticCrossCourseRows } =
+    useDashboardScope();
 
   return useMemo(() => {
-    const all = computePresets(scopeRows, crossCourseRows);
+    // FR6 trend arrows: only meaningful when the scope spans exactly one year
+    // and the prior year has data in the equivalent scope.
+    const years = [...new Set(scopeRows.map((r) => r.year))];
+    let prior;
+    if (years.length === 1) {
+      const priorYear = years[0] - 1;
+      const priorScope = yearAgnosticRows.filter((r) => r.year === priorYear);
+      if (priorScope.length > 0) {
+        prior = {
+          scopeRows: priorScope,
+          levelRows: yearAgnosticCrossCourseRows.filter((r) => r.year === priorYear),
+        };
+      }
+    }
+    const all = computePresets(scopeRows, crossCourseRows, prior);
     const panel = all.filter(
       (p) => !p.offPanel && (!p.roles || p.roles.includes(role)),
     );
     return { panel, all };
-  }, [scopeRows, crossCourseRows, role]);
+  }, [scopeRows, crossCourseRows, yearAgnosticRows, yearAgnosticCrossCourseRows, role]);
 }
 
 /** Highlights the current role may see (severity/category filtering is UI state). */
@@ -73,13 +101,18 @@ export function useModuleChartData(config: ModuleConfig): {
   sanitized: ModuleConfig;
 } {
   const { role } = useRole();
-  const { scopeRows, baselineRows } = useDashboardScope();
+  const { scopeRows, yearAgnosticRows, baselineRows } = useDashboardScope();
 
   return useMemo(() => {
-    const sanitized = sanitizeConfigForRole(config, role);
-    const data = buildChartData(sanitized, { scopeRows, baselineRows, role });
+    const sanitized = sanitizeConfigForRole(config, role, scopeRows);
+    const data = buildChartData(sanitized, {
+      scopeRows,
+      yearAgnosticRows,
+      baselineRows,
+      role,
+    });
     return { data, sanitized };
-  }, [config, role, scopeRows, baselineRows]);
+  }, [config, role, scopeRows, yearAgnosticRows, baselineRows]);
 }
 
 /** FR6 flag summary for the current scope. */

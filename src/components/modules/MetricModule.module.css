@@ -18,7 +18,7 @@
 
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
 }
 
@@ -48,18 +48,10 @@
 
 .headText {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  align-items: center;
+  gap: 7px;
   min-width: 0;
   flex: 1;
-}
-
-.titleRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  width: 100%;
 }
 
 .title {
@@ -67,57 +59,28 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  line-height: 1.3;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
-  word-break: break-word;
+  line-height: 1.25;
+  /* Wrap to two lines before ellipsizing — "Pass rate" must never render
+     as "Pass r..." just because the S-tier header chrome is wide. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .indicator {
   flex-shrink: 0;
-  margin-top: 1px;
   padding: 1px 7px;
   border-radius: 999px;
   background: var(--accent-module-soft);
   border: 1px solid var(--accent-module-border);
   font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: none;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   color: var(--accent-module);
-}
-
-.helpToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0;
-  border: none;
-  background: none;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.helpToggle:hover {
-  color: var(--accent-module);
-}
-
-.helpToggle[aria-expanded='true'] {
-  color: var(--accent-module);
-}
-
-.helpBody {
-  margin: 0;
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--text-secondary);
 }
 
 .headActions {
@@ -125,7 +88,6 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  margin-top: 1px;
 }
 
 .filterWrap {
@@ -155,6 +117,33 @@
   border-color: var(--accent-module-border);
   background: var(--accent-module-soft);
   color: var(--accent-module);
+}
+
+/* S tier: keep the header airy — icon-only filter, no indicator badge
+   (the badge and label return at M/L; hidden controls stay active). */
+.card[data-size='S'] .filterText {
+  display: none;
+}
+
+.card[data-size='S'] .indicator {
+  display: none;
+}
+
+/* S tier: the controls would leave ~40px for the title on one row, so the
+   title gets the full first row and the actions wrap onto a second one. */
+.card[data-size='S'] .header {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.card[data-size='S'] .headText {
+  /* handle is 20px + 8px column-gap */
+  flex-basis: calc(100% - 32px);
+}
+
+.card[data-size='S'] .headActions {
+  width: 100%;
+  justify-content: flex-end;
 }
 
 .sizeSwitch {
@@ -269,9 +258,9 @@
 .chart {
   flex: 1;
   min-height: 0;
-}
-
-.card[data-size='L'] .chart {
+  /* Safety valve for fixed grid rows: scrolls instead of clipping the axis
+     in degenerate cases only (L with the data table open, extreme category
+     counts) — routine S/M/L regions now exceed every chart floor. */
   overflow-y: auto;
 }
 

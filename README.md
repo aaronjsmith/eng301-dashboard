@@ -1,39 +1,32 @@
-# Student Outcomes Dashboard
+# React + TypeScript + Vite
 
-React + TypeScript dashboard for ENG 301 student outcomes metrics. Built with Vite and deployable as a Cloudflare Worker with static assets.
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
-## Development
+Currently, two official plugins are available:
 
-```bash
-npm install
-npm run dev
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the Oxlint configuration
+
+If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+
+```json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc"],
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+  }
+}
 ```
 
-## Build
-
-```bash
-npm run build
-npm run preview
-```
-
-## Deploy to Cloudflare Workers
-
-Requires a Cloudflare account and Wrangler auth (`npx wrangler login`).
-
-```bash
-npm run deploy
-```
-
-This builds the SPA and deploys it via Wrangler. SPA routing is configured with `assets.not_found_handling: "single-page-application"` in `wrangler.jsonc`.
-
-To add a Worker API later, set `"main"` in `wrangler.jsonc` to a Worker entry (for example `./worker/index.ts`) and use the assets binding as needed.
-
-## Scripts
-
-| Script | Description |
-| --- | --- |
-| `npm run dev` | Vite dev server (Cloudflare plugin) |
-| `npm run build` | Typecheck + production build |
-| `npm run preview` | Preview production build |
-| `npm run deploy` | Build and deploy to Cloudflare Workers |
-| `npm run lint` | Oxlint |
+See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.

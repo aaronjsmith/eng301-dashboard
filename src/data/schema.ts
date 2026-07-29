@@ -36,6 +36,13 @@ export const CANONICAL_COLUMNS = [
 /** CSV files carry an extra Course column in place of sheet names. */
 export const CSV_COURSE_COLUMN = 'Course';
 
+/**
+ * Optional columns: validated when present, tolerated when absent. Files
+ * without `Year` get every row tagged FALLBACK_YEAR downstream (normalize.ts),
+ * so pre-multi-year exports keep working unchanged.
+ */
+export const OPTIONAL_COLUMNS = ['Year'] as const;
+
 const VALUE_DOMAINS: Record<string, readonly string[]> = {
   'Dom/Inter': ['Dom', 'Inter'],
   'F/M': ['F', 'M'],
@@ -88,6 +95,7 @@ export function validateTables(tables: RawTable[]): void {
       (h) =>
         h !== '' &&
         h !== CSV_COURSE_COLUMN &&
+        !(OPTIONAL_COLUMNS as readonly string[]).includes(h) &&
         !(CANONICAL_COLUMNS as readonly string[]).includes(h),
     );
     if (missing.length > 0) {
@@ -121,6 +129,12 @@ export function validateTables(tables: RawTable[]): void {
           report(`'${col}' is '${String(row[col])}' — expected a whole number`);
         } else if (col === 'Score' && (n < 0 || n > 100)) {
           report(`'Score' is ${n} — expected 0–100`);
+        }
+      }
+      if (headers.includes('Year')) {
+        const y = asInt(row['Year']);
+        if (y === null || y < 1990 || y > 2100) {
+          report(`'Year' is '${String(row['Year'])}' — expected a year 1990–2100`);
         }
       }
       for (const [col, domain] of Object.entries(VALUE_DOMAINS)) {

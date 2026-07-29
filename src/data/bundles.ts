@@ -14,7 +14,7 @@ export const DEFAULT_MODULES: ModuleConfig[] = [
     metric: 'passRate',
     chartType: 'donut',
     size: 'S',
-    compareTo: 'target',
+    compareTo: 'none',
     breakdown: 'none',
     filters: {},
   },
@@ -83,7 +83,7 @@ export const BUNDLES: ModuleBundle[] = [
         metric: 'passRate',
         chartType: 'donut',
         size: 'S',
-        compareTo: 'target',
+        compareTo: 'none',
         breakdown: 'none',
         filters: {},
       },
@@ -103,7 +103,7 @@ export const BUNDLES: ModuleBundle[] = [
         metric: 'dfwRate',
         chartType: 'bars',
         size: 'M',
-        compareTo: 'target',
+        compareTo: 'none',
         breakdown: 'courseLevel',
         filters: {},
       },
@@ -130,7 +130,7 @@ export const BUNDLES: ModuleBundle[] = [
         metric: 'passRate',
         chartType: 'donut',
         size: 'S',
-        compareTo: 'target',
+        compareTo: 'none',
         breakdown: 'none',
         filters: {},
       },
@@ -170,7 +170,7 @@ export const BUNDLES: ModuleBundle[] = [
         metric: 'midBandShare',
         chartType: 'bars',
         size: 'M',
-        compareTo: 'target',
+        compareTo: 'none',
         breakdown: 'professor',
         filters: {},
         visibleTo: ['chair', 'admin'],
@@ -228,5 +228,11 @@ export const BUNDLES: ModuleBundle[] = [
   },
 ];
 
-/** The global scope a fresh workspace starts with (spec: ENG201, all sessions). */
-export const DEFAULT_GLOBAL_FILTERS: FilterState = { course: ['ENG201'] };
+/**
+ * The global scope a fresh workspace starts with: ENG201, all sessions,
+ * current year (so single-year presets/highlights match the verified numbers).
+ */
+export const DEFAULT_GLOBAL_FILTERS: FilterState = {
+  course: ['ENG201'],
+  year: ['2026'],
+};

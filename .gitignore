@@ -22,9 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Cloudflare
-.wrangler
-.dev.vars
-.mf
-worker-configuration.d.ts

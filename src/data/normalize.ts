@@ -1,4 +1,4 @@
-import type { Grade, Session, StudentRow } from '../types';
+import { FALLBACK_YEAR, type Grade, type Session, type StudentRow } from '../types';
 import type { RawTable } from './schema';
 
 /**
@@ -34,6 +34,10 @@ export function normalizeTables(tables: RawTable[]): StudentRow[] {
         session: String(raw['Session']).trim() as Session,
         score,
         grade: String(raw['Grade']).trim() as Grade,
+        year:
+          raw['Year'] !== undefined && raw['Year'] !== null && String(raw['Year']).trim() !== ''
+            ? Number(raw['Year'])
+            : FALLBACK_YEAR,
       });
     }
   }

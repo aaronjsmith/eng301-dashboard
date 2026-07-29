@@ -1,5 +1,13 @@
-import type { ChartType, Dimension, ModuleConfig, Role } from '../types';
-import { DIMENSION_META } from './scope';
+import type {
+  ChartType,
+  CompareTo,
+  Dimension,
+  MetricId,
+  ModuleConfig,
+  Role,
+  StudentRow,
+} from '../types';
+import { DIMENSION_META, dimensionValue } from './scope';
 import { metricDef } from './registry';
 
 /**
@@ -22,8 +30,9 @@ export function availableChartTypes(
   const def = metricDef(config.metric);
   const { breakdown } = config;
 
-  // Gap metrics: diverging bars are the default rendering (design doc).
-  if (def.gapThreshold !== undefined) return ['divergingBar', 'bars'];
+  // Gap metrics: diverging bars only — the one form whose zero axis renders
+  // negative gaps honestly (a plain bar would clamp them to a stub).
+  if (def.gapThreshold !== undefined) return ['divergingBar'];
 
   if (config.metric === 'gradeDist') {
     const types: ChartType[] = ['pie', 'bars'];
@@ -37,7 +46,7 @@ export function availableChartTypes(
     types.push('bars');
   } else {
     types.push('bars');
-    if (breakdown === 'session') types.push('area'); // ordered axis
+    if (breakdown === 'session' || breakdown === 'year') types.push('area'); // ordered axis
     if (
       config.metric === 'passRate' &&
       breakdown !== 'course' &&
@@ -49,25 +58,57 @@ export function availableChartTypes(
   return types;
 }
 
-/** Breakdown options a role may use for a metric (faculty never see professor). */
+/**
+ * Comparison baselines that make sense for a metric. Population-average
+ * baselines are meaningless for counts — a scoped count vs a bigger
+ * population's count is a size difference, not a comparison; only
+ * like-for-like trend windows compare honestly.
+ */
+export function availableCompareTos(metric: MetricId): CompareTo[] {
+  if (metricDef(metric).unit === 'count') {
+    return ['none', 'priorSession', 'sameTermLastYear'];
+  }
+  return ['none', 'priorSession', 'sameTermLastYear', 'courseAvg', 'allCoursesAvg', 'peerLevel'];
+}
+
+/** True when a dimension splits the population into at least two groups. */
+function splitsPopulation(rows: StudentRow[], dim: Dimension): boolean {
+  const seen = new Set<string>();
+  for (const row of rows) {
+    seen.add(dimensionValue(row, dim));
+    if (seen.size >= 2) return true;
+  }
+  return false;
+}
+
+/**
+ * Breakdown options a role may use for a metric (faculty never see professor).
+ * With `scopeRows`, dimensions the current scope pins to a single group are
+ * dropped too — breaking down ENG201 by course (or course level) is a no-op
+ * that just relabels the same bar.
+ */
 export function availableBreakdowns(
   metric: ModuleConfig['metric'],
   role: Role,
+  scopeRows?: StudentRow[],
 ): (Dimension | 'none')[] {
   return metricDef(metric).allowedBreakdowns.filter((dim) => {
     if (dim === 'none') return true;
     const meta = DIMENSION_META[dim];
-    return !meta.roles || meta.roles.includes(role);
+    if (meta.roles && !meta.roles.includes(role)) return false;
+    if (scopeRows && !splitsPopulation(scopeRows, dim)) return false;
+    return true;
   });
 }
 
-/** Dimensions offered in filter popups for a role (course is global-bar-owned). */
+/** Dimensions offered in filter popups (course + year are global-bar-owned). */
 export function popupDimensions(role: Role): Dimension[] {
   return (Object.values(DIMENSION_META))
     .filter(
       (meta) =>
         meta.filterable &&
         meta.id !== 'course' &&
+        meta.id !== 'year' &&
         (!meta.roles || meta.roles.includes(role)),
     )
     .map((meta) => meta.id);
@@ -75,16 +116,22 @@ export function popupDimensions(role: Role): Dimension[] {
 
 /**
  * Render-time sanitization: a saved chair module previewed as faculty renders
- * without professor dimensions instead of corrupting the saved config.
+ * without professor dimensions instead of corrupting the saved config. With
+ * `scopeRows`, a breakdown the scope pins to one group renders as 'none' —
+ * the config keeps it, so widening the scope brings the breakdown back.
  */
-export function sanitizeConfigForRole(config: ModuleConfig, role: Role): ModuleConfig {
+export function sanitizeConfigForRole(
+  config: ModuleConfig,
+  role: Role,
+  scopeRows?: StudentRow[],
+): ModuleConfig {
   let next = config;
 
-  if (config.breakdown !== 'none') {
-    const meta = DIMENSION_META[config.breakdown];
-    if (meta.roles && !meta.roles.includes(role)) {
-      next = { ...next, breakdown: 'none' };
-    }
+  if (
+    config.breakdown !== 'none' &&
+    !availableBreakdowns(config.metric, role, scopeRows).includes(config.breakdown)
+  ) {
+    next = { ...next, breakdown: 'none' };
   }
 
   const blockedDims = (Object.keys(next.filters) as Dimension[]).filter((dim) => {
@@ -95,6 +142,12 @@ export function sanitizeConfigForRole(config: ModuleConfig, role: Role): ModuleC
     const filters = { ...next.filters };
     for (const dim of blockedDims) delete filters[dim];
     next = { ...next, filters };
+  }
+
+  // A baseline the metric no longer offers (count metrics dropped the
+  // population averages) self-heals instead of rendering a bogus scale.
+  if (!availableCompareTos(next.metric).includes(next.compareTo)) {
+    next = { ...next, compareTo: 'none' };
   }
 
   return next;

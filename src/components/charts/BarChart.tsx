@@ -1,12 +1,14 @@
 import type { SizeTier } from '../../types';
 import type { ChartData, SeriesPoint } from '../../metrics/chartData';
 import {
+  BAR_MAX,
   CHART_FONT,
   MARK,
+  clampNum,
   markColor,
   niceTicks,
   shortLabel,
-  useMeasuredWidth,
+  useMeasuredSize,
   useTooltip,
 } from './common';
 import styles from './Chart.module.css';
@@ -22,8 +24,12 @@ interface BarChartProps {
  * bar tip, hover tooltips. Horizontal when category labels run long.
  */
 export function BarChart({ data, size }: BarChartProps) {
-  const [hostRef, measured] = useMeasuredWidth<HTMLDivElement>();
+  const [plotRef, measured] = useMeasuredSize<HTMLDivElement>();
   const { tip, show, hide, hostRef: tipHost } = useTooltip();
+  const setPlotRef = (el: HTMLDivElement | null) => {
+    plotRef.current = el;
+    tipHost.current = el;
+  };
 
   const points =
     data.points.length > 0
@@ -40,7 +46,7 @@ export function BarChart({ data, size }: BarChartProps) {
           } satisfies SeriesPoint,
         ];
 
-  const width = measured || 240;
+  const width = measured.width || 240;
   const values = points.map((p) => p.value ?? 0);
   const baselineValue = data.baseline?.value ?? 0;
   const maxValue = Math.max(...values, size === 'S' ? 0 : baselineValue, 1);
@@ -52,17 +58,23 @@ export function BarChart({ data, size }: BarChartProps) {
   const visible = size === 'S' ? points.filter((p) => !p.suppressed).slice(0, 5) : points;
 
   if (horizontal) {
-    const rowH = 24;
     const labelW = 92;
     const topPad = 4;
+    // Rows stretch modestly into free card height; 24 (the old constant) floors.
+    const rowH = clampNum(
+      measured.height ? (measured.height - topPad - 18) / visible.length : 24,
+      24,
+      44,
+    );
+    const barH = Math.min(BAR_MAX[size], rowH - 8);
     const chartW = Math.max(width - labelW - 46, 60);
     const height = topPad + visible.length * rowH + 18;
     const ticks = niceTicks(maxValue);
     const x = (v: number) => (v / (ticks.at(-1) || 1)) * chartW;
 
     return (
-      <div className={styles.host} ref={hostRef} data-chart="bars">
-        <div ref={tipHost} style={{ position: 'relative' }}>
+      <div className={styles.host} data-chart="bars">
+        <div ref={setPlotRef} className={styles.plot}>
           <svg className={styles.svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label={data.metricLabel}>
             {size === 'L' &&
               ticks.map((t) => (
@@ -118,9 +130,9 @@ export function BarChart({ data, size }: BarChartProps) {
                     <>
                       <rect
                         x={labelW}
-                        y={y + (rowH - 16) / 2}
+                        y={y + (rowH - barH) / 2}
                         width={Math.max(barW, 2)}
-                        height={16}
+                        height={barH}
                         rx={MARK.radius}
                         fill={markColor(p.status)}
                       >
@@ -182,24 +194,22 @@ export function BarChart({ data, size }: BarChartProps) {
     );
   }
 
-  // Vertical columns
-  const plotH = size === 'S' ? 56 : size === 'M' ? 110 : 150;
+  // Vertical columns — the old per-tier constants floor the measured height.
+  const minPlotH = size === 'S' ? 56 : size === 'M' ? 122 : 150;
   const axisBand = size === 'S' ? 0 : 16;
   const topPad = size === 'S' ? 2 : 14;
+  const plotH = Math.max(minPlotH, measured.height - topPad - axisBand);
   const height = topPad + plotH + axisBand;
-  const barW = Math.min(
-    MARK.barMax,
-    Math.max(8, (width - 20) / Math.max(visible.length, 1) - MARK.gap * 3),
-  );
   const slot = width / Math.max(visible.length, 1);
+  const barW = clampNum(slot * 0.55, 8, BAR_MAX[size]);
   const y = (v: number) => topPad + plotH - (v / maxValue) * plotH;
 
   const maxV = Math.max(...values);
   const minV = Math.min(...values);
 
   return (
-    <div className={styles.host} ref={hostRef} data-chart="bars">
-      <div ref={tipHost} style={{ position: 'relative' }}>
+    <div className={styles.host} data-chart="bars">
+      <div ref={setPlotRef} className={styles.plot}>
         <svg className={styles.svg} viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label={data.metricLabel}>
           {size === 'L' &&
             niceTicks(maxValue).map((t) => (

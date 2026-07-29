@@ -6,7 +6,7 @@ import type {
   Session,
   StudentRow,
 } from '../types';
-import { SESSION_ORDER } from '../types';
+import { priorTerm, SESSION_ORDER } from '../types';
 import {
   dimensionValue,
   dimensionValues,
@@ -73,6 +73,12 @@ export interface ChartDataContext {
   /** Role scope ∩ global filters — the module's outer population. */
   scopeRows: StudentRow[];
   /**
+   * Role scope ∩ global filters with YEAR removed — the slice year-crossing
+   * baselines (prior session across a year boundary, same term last year)
+   * compute against. Still role-scoped, so nothing leaks across professors.
+   */
+  yearAgnosticRows: StudentRow[];
+  /**
    * ALL rows, unscoped — used ONLY for comparison baselines (course average /
    * all-courses / peer-level), the one spec-sanctioned aggregate exception to
    * faculty row-scoping. Never rendered as rows.
@@ -127,6 +133,10 @@ function sessionsIn(population: StudentRow[]): Session[] {
   return SESSION_ORDER.filter((s) => present.has(s));
 }
 
+function yearsIn(population: StudentRow[]): number[] {
+  return [...new Set(population.map((r) => r.year))].sort((a, b) => a - b);
+}
+
 function computeBaseline(
   config: ModuleConfig,
   population: StudentRow[],
@@ -139,11 +149,19 @@ function computeBaseline(
     formatted: formatUnit(value, def.unit),
   });
 
+  // Population-average baselines never apply to counts (see availableCompareTos).
+  if (
+    def.unit === 'count' &&
+    (config.compareTo === 'courseAvg' ||
+      config.compareTo === 'allCoursesAvg' ||
+      config.compareTo === 'peerLevel')
+  ) {
+    return undefined;
+  }
+
   switch (config.compareTo) {
     case 'none':
       return undefined;
-    case 'target':
-      return def.target ? fmt(def.target.value, `Target ${def.target.label}`) : undefined;
     case 'courseAvg': {
       const courses = new Set(population.map((r) => r.course));
       const rows = ctx.baselineRows.filter((r) => courses.has(r.course));
@@ -166,25 +184,43 @@ function computeBaseline(
     }
     case 'priorSession': {
       const sessions = sessionsIn(population);
-      if (sessions.length !== 1) return undefined;
-      const idx = SESSION_ORDER.indexOf(sessions[0]);
-      if (idx <= 0) return undefined;
-      const prior = SESSION_ORDER[idx - 1];
-      // Same population with the session constraint REPLACED by the prior one.
-      const rows = selectRows(ctx.scopeRows, stripDimension(config, 'session')).filter(
-        (r) => r.session === prior,
+      const years = yearsIn(population);
+      if (sessions.length !== 1 || years.length !== 1) return undefined;
+      const pt = priorTerm({ year: years[0], session: sessions[0] });
+      // Same population with the term REPLACED by the prior one — Spring
+      // rolls over the year boundary to the prior year's Winter.
+      const rows = selectRows(
+        ctx.yearAgnosticRows,
+        stripDimensions(config, 'session', 'year'),
+      ).filter((r) => r.session === pt.session && r.year === pt.year);
+      const value = def.compute(rows);
+      return value !== null
+        ? fmt(value, `Prior session (${pt.session} ${pt.year})`)
+        : undefined;
+    }
+    case 'sameTermLastYear': {
+      const years = yearsIn(population);
+      if (years.length !== 1) return undefined;
+      const y = years[0];
+      // Replace ONLY the year constraint; any session filter carries over
+      // (Fall 2026 → Fall 2025; an unfiltered module degrades to 2025 overall).
+      const rows = selectRows(ctx.yearAgnosticRows, stripDimensions(config, 'year')).filter(
+        (r) => r.year === y - 1,
       );
       const value = def.compute(rows);
-      return value !== null ? fmt(value, `Prior session (${prior})`) : undefined;
+      const sessions = sessionsIn(population);
+      const label =
+        sessions.length === 1 ? `${sessions[0]} ${y - 1}` : `Same scope ${y - 1}`;
+      return value !== null ? fmt(value, label) : undefined;
     }
   }
 }
 
-/** Module + investigate filters with one dimension removed (baseline math). */
-function stripDimension(config: ModuleConfig, dim: Dimension) {
+/** Module + investigate filters with dimensions removed (baseline math). */
+function stripDimensions(config: ModuleConfig, ...dims: Dimension[]) {
   const merged = { ...config.investigate?.slice, ...config.filters };
-  const { [dim]: _omit, ...rest } = merged;
-  return rest;
+  for (const dim of dims) delete merged[dim];
+  return merged;
 }
 
 function suppress(unit: MetricUnit, value: number | null, n: number): Pick<SeriesPoint, 'value' | 'formatted' | 'suppressed'> {

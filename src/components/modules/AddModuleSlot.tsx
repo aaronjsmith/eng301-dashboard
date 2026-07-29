@@ -1,31 +1,48 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ChartType, ModuleConfig } from '../../types';
 import { useData } from '../../context/DataContext';
+import { useRole } from '../../context/RoleContext';
 import { useWorkspace } from '../../context/WorkspaceContext';
+import { freshId } from '../../state/ids';
+import { flashCard } from './flash';
 import styles from './AddModuleSlot.module.css';
 
-function freshId(base: string): string {
-  const suffix =
-    typeof crypto !== 'undefined' && 'randomUUID' in crypto
-      ? crypto.randomUUID().slice(0, 8)
-      : Math.random().toString(36).slice(2, 10);
-  return `${base}-${suffix}`;
-}
+const CHART_LABEL: Record<ChartType, string> = {
+  donut: 'donut',
+  bars: 'bars',
+  pie: 'pie',
+  area: 'area',
+  heatmap: 'heatmap',
+  divergingBar: 'gap bars',
+};
 
 /**
  * The dashed "new instance" slot — always reflows to the end of the roster.
- * Offers a blank module plus the three ready-made bundles (Overview /
- * Course Detail / Equity starting layouts).
+ * Offers a blank module plus the three starting layouts as accordions: each
+ * expands to its modules for one-at-a-time adds (menu stays open; the global
+ * scope is untouched), with "Add all" keeping the whole-bundle behavior
+ * (including Overview/Equity widening the course scope to All).
  */
 export function AddModuleSlot() {
   const { dispatch, bundles } = useWorkspace();
   const { meta } = useData();
+  const { role } = useRole();
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+
+  const close = () => {
+    setOpen(false);
+    setExpanded(null);
+  };
 
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      if (!rootRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+        setExpanded(null);
+      }
     };
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
@@ -40,12 +57,20 @@ export function AddModuleSlot() {
         metric: 'passRate',
         chartType: 'donut',
         size: 'S',
-        compareTo: 'target',
+        compareTo: 'none',
         breakdown: 'none',
         filters: {},
       },
     });
-    setOpen(false);
+    close();
+  };
+
+  // Single module from a bundle: fresh id, no global-filter change, menu
+  // stays open so several can be added in a row.
+  const addOne = (template: ModuleConfig) => {
+    const id = freshId(template.id);
+    dispatch({ type: 'add-module', config: { ...template, id } });
+    requestAnimationFrame(() => flashCard(id));
   };
 
   return (
@@ -53,7 +78,7 @@ export function AddModuleSlot() {
       <button
         type="button"
         className={styles.slot}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open ? close() : setOpen(true))}
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -70,25 +95,64 @@ export function AddModuleSlot() {
             <span className={styles.itemSub}>Pass-rate donut — configure from there</span>
           </button>
           <p className={styles.menuHeading}>Starting layouts</p>
-          {bundles.map((bundle) => (
-            <button
-              key={bundle.id}
-              type="button"
-              role="menuitem"
-              className={styles.item}
-              onClick={() => {
-                dispatch({
-                  type: 'add-bundle',
-                  bundle,
-                  courses: meta?.courses ?? [],
-                });
-                setOpen(false);
-              }}
-            >
-              <span className={styles.itemTitle}>{bundle.label}</span>
-              <span className={styles.itemSub}>{bundle.description}</span>
-            </button>
-          ))}
+          {bundles.map((bundle) => {
+            const isExpanded = expanded === bundle.id;
+            const visibleModules = bundle.modules.filter(
+              (m) => !m.visibleTo || m.visibleTo.includes(role),
+            );
+            return (
+              <div key={bundle.id}>
+                <button
+                  type="button"
+                  className={styles.bundleHead}
+                  aria-expanded={isExpanded}
+                  onClick={() => setExpanded(isExpanded ? null : bundle.id)}
+                >
+                  <span className={styles.bundleText}>
+                    <span className={styles.itemTitle}>{bundle.label}</span>
+                    <span className={styles.itemSub}>{bundle.description}</span>
+                  </span>
+                  <span className={styles.chevron} data-open={isExpanded || undefined} aria-hidden="true">
+                    ▾
+                  </span>
+                </button>
+
+                {isExpanded && (
+                  <div className={styles.subList} role="group" aria-label={`${bundle.label} modules`}>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.addAll}
+                      onClick={() => {
+                        dispatch({
+                          type: 'add-bundle',
+                          bundle,
+                          courses: meta?.courses ?? [],
+                        });
+                        close();
+                      }}
+                    >
+                      ⊕ Add all ({bundle.modules.length})
+                    </button>
+                    {visibleModules.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        role="menuitem"
+                        className={styles.subItem}
+                        onClick={() => addOne(m)}
+                      >
+                        <span className={styles.itemTitle}>{m.title}</span>
+                        <span className={styles.subMeta}>
+                          {m.size} · {CHART_LABEL[m.chartType]}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

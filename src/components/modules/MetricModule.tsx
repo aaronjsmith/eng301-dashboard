@@ -7,11 +7,14 @@ import { metricDef } from '../../metrics/registry';
 import {
   availableBreakdowns,
   availableChartTypes,
+  availableCompareTos,
   effectiveChartType,
 } from '../../metrics/availability';
 import { activeFilterCount, DIMENSION_META } from '../../metrics/scope';
+import { GLOSSARY } from '../../metrics/glossary';
 import { Chart } from '../charts/Chart';
 import { FilterPopup } from '../filters/FilterPopup';
+import { Tip } from '../ui/Tip';
 import { DataTable } from './DataTable';
 import { InvestigateView } from './InvestigateView';
 import { useDashboardScope } from '../../hooks/useMetrics';
@@ -28,9 +31,9 @@ const SIZES: SizeTier[] = ['S', 'M', 'L'];
 const COMPARE_LABEL: Record<CompareTo, string> = {
   none: 'No baseline',
   priorSession: 'Prior session',
+  sameTermLastYear: 'Same term last year',
   courseAvg: 'Course average',
   allCoursesAvg: 'All-courses average',
-  target: 'Target',
   peerLevel: 'Peer course level',
 };
 
@@ -55,7 +58,6 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
   const { scopeRows } = useDashboardScope();
   const { data, sanitized } = useModuleChartData(config);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(true);
 
   const def = metricDef(config.metric);
   const patch = (p: Partial<ModuleConfig>) =>
@@ -67,7 +69,7 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
   );
   const chartTypes = availableChartTypes(sanitized, { courseCount });
   const chartType = effectiveChartType(sanitized, { courseCount });
-  const breakdowns = availableBreakdowns(config.metric, role);
+  const breakdowns = availableBreakdowns(config.metric, role, scopeRows);
   const filterCount = activeFilterCount(sanitized.filters);
   const size = config.investigate ? 'L' : config.size;
   const isInvestigate = config.investigate !== undefined;
@@ -99,48 +101,46 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
           </svg>
         </button>
         <div className={styles.headText}>
-          <div className={styles.titleRow}>
-            <h3 className={styles.title}>{config.title}</h3>
-            <span
-              className={styles.indicator}
-              title={
-                def.indicator === 'lagging'
-                  ? 'Lagging indicator — looks at results that already happened'
-                  : 'Leading indicator — an early warning signal'
-              }
-            >
-              {def.indicator === 'lagging' ? 'Lagging' : 'Leading'}
-            </span>
-          </div>
-          <button
-            type="button"
-            className={styles.helpToggle}
-            aria-expanded={helpOpen}
-            onClick={() => setHelpOpen((v) => !v)}
+          <Tip
+            content={{
+              title: config.title,
+              body:
+                config.title === def.label
+                  ? def.description
+                  : `${def.label} — ${def.description}`,
+            }}
           >
-            {helpOpen ? 'Hide what this means' : 'What does this mean?'}
-          </button>
+            <h3 className={styles.title}>{config.title}</h3>
+          </Tip>
+          <Tip content={GLOSSARY[def.indicator]}>
+            <span className={styles.indicator}>
+              {def.indicator === 'lagging' ? 'Lag' : 'Lead'}
+            </span>
+          </Tip>
         </div>
         <div className={styles.headActions}>
           <div className={styles.filterWrap}>
-            <button
-              type="button"
-              className={filterCount > 0 ? styles.filterBtnActive : styles.filterBtn}
-              onClick={() => setFilterOpen((v) => !v)}
-              aria-expanded={filterOpen}
-              title="Module filters (compose on top of the global scope)"
-            >
-              <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
-                <path
-                  d="M1.5 2h9L7 6.6V10l-2-1V6.6L1.5 2Z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Filter{filterCount > 0 ? ` · ${filterCount}` : ''}
-            </button>
+            <Tip content={GLOSSARY.moduleFilter}>
+              <button
+                type="button"
+                className={filterCount > 0 ? styles.filterBtnActive : styles.filterBtn}
+                onClick={() => setFilterOpen((v) => !v)}
+                aria-expanded={filterOpen}
+              >
+                <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
+                  <path
+                    d="M1.5 2h9L7 6.6V10l-2-1V6.6L1.5 2Z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className={styles.filterText}>
+                  Filter{filterCount > 0 ? ` · ${filterCount}` : ''}
+                </span>
+              </button>
+            </Tip>
             {filterOpen && (
               <FilterPopup
                 scopeRows={scopeRows}
@@ -159,7 +159,7 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
                   className={s === size ? styles.sizeBtnActive : styles.sizeBtn}
                   aria-pressed={s === size}
                   onClick={() => patch({ size: s })}
-                  title={s === 'S' ? 'Overview (1×1)' : s === 'M' ? 'Standard (2×1)' : 'Detail (2×2)'}
+                  title={s === 'S' ? 'Overview (small)' : s === 'M' ? 'Standard (wide)' : 'Detail (large)'}
                 >
                   {s}
                 </button>
@@ -180,25 +180,21 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
         </div>
       </header>
 
-      {helpOpen && <p className={styles.helpBody}>{def.description}</p>}
-
       {!isInvestigate && size !== 'S' && (
         <div className={styles.controls}>
           <label className={styles.control}>
             <span className={styles.controlLabel}>Compare to</span>
             <select
               className={styles.select}
-              value={config.compareTo}
+              value={sanitized.compareTo}
               onChange={(e) => patch({ compareTo: e.target.value as CompareTo })}
               aria-label="Compare to baseline"
             >
-              {(Object.keys(COMPARE_LABEL) as CompareTo[])
-                .filter((c) => c !== 'target' || def.target !== undefined)
-                .map((c) => (
-                  <option key={c} value={c}>
-                    {COMPARE_LABEL[c]}
-                  </option>
-                ))}
+              {availableCompareTos(config.metric).map((c) => (
+                <option key={c} value={c}>
+                  {COMPARE_LABEL[c]}
+                </option>
+              ))}
             </select>
           </label>
           <label className={styles.control}>

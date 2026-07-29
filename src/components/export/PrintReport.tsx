@@ -36,7 +36,7 @@ const BREACH_CHARTS: Record<string, Omit<ModuleConfig, 'id' | 'title'>> = {
     metric: 'midBandShare',
     chartType: 'bars',
     size: 'M',
-    compareTo: 'target',
+    compareTo: 'none',
     breakdown: 'professor',
     filters: {},
   },

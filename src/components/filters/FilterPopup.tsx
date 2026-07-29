@@ -35,7 +35,12 @@ export function FilterPopup({ scopeRows, filters, onApply, onClose }: FilterPopu
 
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) onClose();
+      // The wrapper (popup + its opener button) counts as inside — otherwise
+      // clicking the Filter button closes on pointerdown and re-opens on click.
+      const inside = (rootRef.current?.parentElement ?? rootRef.current)?.contains(
+        e.target as Node,
+      );
+      if (!inside) onClose();
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();

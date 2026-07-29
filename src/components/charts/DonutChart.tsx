@@ -1,6 +1,6 @@
 import type { SizeTier } from '../../types';
 import type { ChartData } from '../../metrics/chartData';
-import { markColor } from './common';
+import { clampNum, markColor, useMeasuredSize } from './common';
 import styles from './Chart.module.css';
 
 interface DonutChartProps {
@@ -13,9 +13,19 @@ interface DonutChartProps {
  * default for rate metrics). M/L add the Compare-to baseline tick + caption.
  */
 export function DonutChart({ data, size }: DonutChartProps) {
+  const [plotRef, measured] = useMeasuredSize<HTMLDivElement>();
   const value = data.hero.value;
-  const r = size === 'S' ? 34 : 44;
-  const stroke = 11;
+  // Ring fills the card; stroke, radius, and the in-ring number scale
+  // together so a large donut never reads as a thin thread with tiny type.
+  // The old per-tier radius floors it (print/unmeasured renders unchanged).
+  const avail =
+    measured.width && measured.height
+      ? Math.min(measured.width, measured.height)
+      : 0;
+  const stroke = avail ? clampNum(avail * 0.055, 11, 30) : 11;
+  const minR = size === 'S' ? 34 : size === 'M' ? 44 : 50;
+  const r = avail ? Math.max(minR, avail / 2 - stroke - 6) : minR;
+  const heroFont = clampNum(r * 0.4, size === 'S' ? 17 : 19, 44);
   const c = 2 * Math.PI * r;
   const box = (r + stroke) * 2;
   const share = value !== null ? Math.max(0, Math.min(100, value)) / 100 : 0;
@@ -30,13 +40,14 @@ export function DonutChart({ data, size }: DonutChartProps) {
 
   return (
     <div className={styles.host} data-chart="donut">
-      <svg
-        className={styles.svg}
-        viewBox={`0 0 ${box} ${box}`}
-        style={{ maxWidth: box, margin: '0 auto' }}
-        role="img"
-        aria-label={`${data.metricLabel}: ${data.hero.formatted}`}
-      >
+      <div ref={plotRef} className={`${styles.plot} ${styles.centered}`}>
+        <svg
+          viewBox={`0 0 ${box} ${box}`}
+          width={box}
+          height={box}
+          role="img"
+          aria-label={`${data.metricLabel}: ${data.hero.formatted}`}
+        >
         <circle
           cx={box / 2}
           cy={box / 2}
@@ -65,7 +76,7 @@ export function DonutChart({ data, size }: DonutChartProps) {
             x2={box / 2 + (r + stroke * 0.95) * Math.cos(baselineRad)}
             y2={box / 2 + (r + stroke * 0.95) * Math.sin(baselineRad)}
             stroke="var(--text-secondary)"
-            strokeWidth={2}
+            strokeWidth={Math.max(2, stroke * 0.18)}
           />
         )}
         <text
@@ -73,13 +84,14 @@ export function DonutChart({ data, size }: DonutChartProps) {
           y={box / 2 + 1}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={size === 'S' ? 17 : 19}
+          fontSize={heroFont}
           fontWeight={700}
           fill="var(--text-primary)"
         >
           {data.hero.formatted}
         </text>
-      </svg>
+        </svg>
+      </div>
       {size !== 'S' && data.baseline && (
         <p className={styles.heroSub} style={{ textAlign: 'center', margin: '4px 0 0' }}>
           {data.baseline.label}: {data.baseline.formatted}

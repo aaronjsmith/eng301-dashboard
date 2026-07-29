@@ -1,6 +1,6 @@
 import type { SizeTier } from '../../types';
 import type { ChartData, SeriesPoint } from '../../metrics/chartData';
-import { BAND_COLORS, inkForBin, useTooltip } from './common';
+import { BAND_COLORS, clampNum, inkForBin, useMeasuredSize, useTooltip } from './common';
 import styles from './Chart.module.css';
 
 interface PieChartProps {
@@ -14,11 +14,24 @@ interface PieChartProps {
  * where they fit; slices beyond 4 fold into "Other" upstream.
  */
 export function PieChart({ data, size }: PieChartProps) {
+  const [plotRef, measured] = useMeasuredSize<HTMLDivElement>();
   const { tip, show, hide, hostRef } = useTooltip();
+  const setPlotRef = (el: HTMLDivElement | null) => {
+    plotRef.current = el;
+    hostRef.current = el;
+  };
   const slices: SeriesPoint[] = (data.slices ?? data.points).slice(0, 4);
   const total = slices.reduce((sum, s) => sum + (s.value ?? 0), 0);
 
-  const r = size === 'S' ? 38 : 52;
+  // Disc fills the card; the old per-tier radius floors it (print/unmeasured
+  // renders unchanged). Slice labels scale mildly with the disc.
+  const avail =
+    measured.width && measured.height
+      ? Math.min(measured.width, measured.height)
+      : 0;
+  const minR = size === 'S' ? 38 : size === 'M' ? 52 : 58;
+  const r = avail ? Math.max(minR, avail / 2 - 8) : minR;
+  const sliceFont = clampNum(r * 0.075, 10.5, 16);
   const box = r * 2 + 8;
 
   let angle = -Math.PI / 2;
@@ -48,11 +61,11 @@ export function PieChart({ data, size }: PieChartProps) {
 
   return (
     <div className={styles.host} data-chart="pie">
-      <div ref={hostRef} style={{ position: 'relative' }}>
+      <div ref={setPlotRef} className={`${styles.plot} ${styles.centered}`}>
         <svg
-          className={styles.svg}
           viewBox={`0 0 ${box} ${box}`}
-          style={{ maxWidth: box, margin: '0 auto' }}
+          width={box}
+          height={box}
           role="img"
           aria-label={data.metricLabel}
         >
@@ -83,7 +96,7 @@ export function PieChart({ data, size }: PieChartProps) {
                   y={a.labelY}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize={10.5}
+                  fontSize={sliceFont}
                   fontWeight={600}
                   fill={inkForBin(a.binIndex)}
                 >

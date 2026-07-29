@@ -6,12 +6,19 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import type { ModuleConfig } from '../../types';
+import type { GridSlot, ModuleConfig } from '../../types';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { useRole } from '../../context/RoleContext';
 import { MetricModule } from './MetricModule';
 import { AddModuleSlot } from './AddModuleSlot';
-import { columnsFor, packModules } from './rosterLayout';
+import {
+  ROW_UNIT,
+  cellFromPointer,
+  clampTargetCell,
+  columnsFor,
+  resolve,
+  type LayoutItem,
+} from './rosterLayout';
 import styles from './ModuleGrid.module.css';
 
 const ADD_SLOT_ID = '__add';
@@ -31,11 +38,13 @@ interface DragState {
 }
 
 /**
- * The roster grid (spec §4): explicit lattice, slots derived from module
- * array order by the first-fit packer. Dragging a card header previews
- * displacement live (FLIP, transform-only) and commits the reorder on drop;
- * magnetic off parks cards on free offsets instead; toggling back on
- * re-magnetizes to the nearest-slot order.
+ * The roster grid (spec §4): a coordinate lattice with gravity, resolved by
+ * rosterLayout from each module's committed cell. Dragging pins the card to
+ * the cell under the pointer (pure geometry — card rects are never read, so
+ * the preview cannot feed back on itself); displaced neighbors push down and
+ * re-pack live (FLIP, transform-only); drop commits the resolved layout.
+ * Magnetic off parks cards on free offsets; toggling back on snaps each
+ * parked card to its nearest cell.
  */
 export function ModuleGrid() {
   const { modules, magnetic, dispatch } = useWorkspace();
@@ -44,8 +53,12 @@ export function ModuleGrid() {
   const gridRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef(new Map<string, HTMLDivElement>());
   const prevRects = useRef(new Map<string, DOMRect>());
-  const [cols, setCols] = useState(4);
-  const [previewIds, setPreviewIds] = useState<string[] | null>(null);
+  const [cols, setCols] = useState(8);
+  const [previewCell, setPreviewCell] = useState<GridSlot | null>(null);
+  // Layout snapshot taken at drag start: every card gets a pinned cell for
+  // the drag's duration, so previews only push cards locally — auto-placed
+  // cards must never wholesale re-pack mid-drag (reads as cards vanishing).
+  const frozenRef = useRef<{ cols: number; items: LayoutItem[] } | null>(null);
   const [drag, setDrag] = useState<DragState | null>(null);
   const [liveOffset, setLiveOffset] = useState<{ id: string; dx: number; dy: number } | null>(
     null,
@@ -56,13 +69,10 @@ export function ModuleGrid() {
     [modules, role],
   );
 
-  const order = useMemo(() => {
-    if (!previewIds) return visible;
-    const byId = new Map(visible.map((m) => [m.id, m]));
-    return previewIds
-      .map((id) => byId.get(id))
-      .filter((m): m is ModuleConfig => m !== undefined);
-  }, [visible, previewIds]);
+  const layoutItems = useMemo<LayoutItem[]>(
+    () => visible.map((m) => ({ id: m.id, size: m.size, slot: m.slot })),
+    [visible],
+  );
 
   useEffect(() => {
     const el = gridRef.current;
@@ -75,10 +85,34 @@ export function ModuleGrid() {
     return () => observer.disconnect();
   }, []);
 
-  const slots = useMemo(
-    () => packModules(order, cols, { id: ADD_SLOT_ID }),
-    [order, cols],
-  );
+  const frozenItems = (forCols: number): LayoutItem[] => {
+    if (!frozenRef.current || frozenRef.current.cols !== forCols) {
+      const base = resolve(layoutItems, forCols);
+      frozenRef.current = {
+        cols: forCols,
+        items: layoutItems.map((it) => {
+          const s = base.get(it.id);
+          return s ? { ...it, slot: { col: s.col, row: s.row } } : it;
+        }),
+      };
+    }
+    return frozenRef.current.items;
+  };
+
+  // Layout is a pure function of (modules, cols, dragged card, target cell).
+  const slots = useMemo(() => {
+    const dragging = magnetic && drag !== null && previewCell !== null;
+    const items = dragging
+      ? frozenItems(cols).map((it) =>
+          it.id === drag.id ? { ...it, slot: previewCell } : it,
+        )
+      : layoutItems;
+    return resolve(items, cols, {
+      trailingId: ADD_SLOT_ID,
+      ...(dragging ? { priorityId: drag.id, keepPriorityInPlace: true } : {}),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layoutItems, cols, magnetic, drag, previewCell]);
 
   // FLIP: displaced neighbors animate to their would-be slots (transform only).
   useLayoutEffect(() => {
@@ -102,44 +136,24 @@ export function ModuleGrid() {
     }
   });
 
-  /** Merge a new VISIBLE order into the full list (hidden modules keep their spots). */
-  const mergeOrder = (visibleIds: string[]): string[] => {
-    const queue = [...visibleIds];
-    const visibleSet = new Set(visible.map((m) => m.id));
-    return modules.map((m) => (visibleSet.has(m.id) ? (queue.shift() ?? m.id) : m.id));
-  };
-
-  // Re-magnetize: toggle off→on snaps every parked card to its nearest slot.
+  // Re-magnetize: toggle off→on snaps every parked card to its nearest cell.
   const prevMagnetic = useRef(magnetic);
   useEffect(() => {
     const was = prevMagnetic.current;
     prevMagnetic.current = magnetic;
-    if (!was && magnetic && visible.some((m) => m.freeOffset)) {
-      const centers = visible
-        .map((m) => {
-          const rect = cardRefs.current.get(m.id)?.getBoundingClientRect();
-          return rect
-            ? { id: m.id, cx: rect.left + rect.width / 2, cy: rect.top + rect.height / 2 }
-            : { id: m.id, cx: Number.MAX_SAFE_INTEGER, cy: Number.MAX_SAFE_INTEGER };
-        })
-        .sort((a, b) => (Math.abs(a.cy - b.cy) > 40 ? a.cy - b.cy : a.cx - b.cx));
-      dispatch({ type: 'remagnetize', ids: mergeOrder(centers.map((c) => c.id)) });
+    const gridRect = gridRef.current?.getBoundingClientRect();
+    if (!was && magnetic && gridRect && visible.some((m) => m.freeOffset)) {
+      const cellSlots: Record<string, GridSlot> = {};
+      for (const m of visible) {
+        const rect = cardRefs.current.get(m.id)?.getBoundingClientRect();
+        if (rect) {
+          cellSlots[m.id] = cellFromPointer(gridRect, cols, rect.left + 1, rect.top + 1);
+        }
+      }
+      dispatch({ type: 'remagnetize', slots: cellSlots });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [magnetic]);
-
-  const insertionIndex = (pointerX: number, pointerY: number, draggedId: string): number => {
-    const others = order.filter((m) => m.id !== draggedId);
-    for (let i = 0; i < others.length; i += 1) {
-      const el = cardRefs.current.get(others[i].id);
-      if (!el) continue;
-      const rect = el.getBoundingClientRect();
-      if (pointerY < rect.top - 4) return i;
-      const sameRow = pointerY >= rect.top - 4 && pointerY <= rect.bottom + 4;
-      if (sameRow && pointerX < rect.left + rect.width / 2) return i;
-    }
-    return others.length;
-  };
 
   const startDrag = (e: ReactPointerEvent<HTMLElement>, config: ModuleConfig) => {
     if (e.button !== 0) return;
@@ -148,6 +162,8 @@ export function ModuleGrid() {
     const rect = card.getBoundingClientRect();
     e.currentTarget.setPointerCapture(e.pointerId);
     e.preventDefault();
+    frozenRef.current = null;
+    if (magnetic) frozenItems(cols); // snapshot the pre-drag layout
     setDrag({
       id: config.id,
       x: rect.left,
@@ -171,11 +187,23 @@ export function ModuleGrid() {
         setDrag((prev) =>
           prev ? { ...prev, x: e.clientX - prev.grabDX, y: e.clientY - prev.grabDY } : prev,
         );
-        const idx = insertionIndex(e.clientX, e.clientY, drag.id);
-        const nextIds = order.filter((m) => m.id !== drag.id).map((m) => m.id);
-        nextIds.splice(idx, 0, drag.id);
-        const currentIds = (previewIds ?? visible.map((m) => m.id)).join();
-        if (nextIds.join() !== currentIds) setPreviewIds(nextIds);
+        const gridRect = gridRef.current?.getBoundingClientRect();
+        if (!gridRect) return;
+        const raw = cellFromPointer(gridRect, cols, e.clientX, e.clientY);
+        // Hysteresis: only switch cells once the pointer is ≥8px inside the
+        // new cell, so boundary jitter can't flap the layout back and forth.
+        const M = 8;
+        const settled =
+          cellFromPointer(gridRect, cols, e.clientX - M, e.clientY).col === raw.col &&
+          cellFromPointer(gridRect, cols, e.clientX + M, e.clientY).col === raw.col &&
+          cellFromPointer(gridRect, cols, e.clientX, e.clientY - M).row === raw.row &&
+          cellFromPointer(gridRect, cols, e.clientX, e.clientY + M).row === raw.row;
+        const cell = clampTargetCell(frozenItems(cols), cols, drag.id, raw);
+        setPreviewCell((p) => {
+          if (p && p.col === cell.col && p.row === cell.row) return p;
+          if (p && !settled) return p;
+          return cell;
+        });
       } else {
         setLiveOffset({
           id: drag.id,
@@ -187,7 +215,20 @@ export function ModuleGrid() {
 
     const onUp = () => {
       if (magnetic) {
-        if (previewIds) dispatch({ type: 'reorder', ids: mergeOrder(previewIds) });
+        if (previewCell) {
+          // Commit the fully-compacted layout (gravity applies to the dragged
+          // card too) so stored state equals the next render — no post-drop hop.
+          const items = frozenItems(cols).map((it) =>
+            it.id === drag.id ? { ...it, slot: previewCell } : it,
+          );
+          const final = resolve(items, cols, { priorityId: drag.id });
+          dispatch({
+            type: 'set-layout',
+            slots: Object.fromEntries(
+              [...final].map(([id, s]) => [id, { col: s.col, row: s.row }]),
+            ),
+          });
+        }
       } else if (liveOffset) {
         dispatch({
           type: 'set-free-offset',
@@ -196,8 +237,9 @@ export function ModuleGrid() {
         });
       }
       setDrag(null);
-      setPreviewIds(null);
+      setPreviewCell(null);
       setLiveOffset(null);
+      frozenRef.current = null;
     };
 
     document.addEventListener('pointermove', onMove);
@@ -207,7 +249,7 @@ export function ModuleGrid() {
       document.removeEventListener('pointerup', onUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drag, magnetic, order, previewIds, liveOffset]);
+  }, [drag, magnetic, cols, layoutItems, previewCell, liveOffset]);
 
   const dragged = drag ? visible.find((m) => m.id === drag.id) : undefined;
   const addSlot = slots.get(ADD_SLOT_ID);
@@ -216,10 +258,10 @@ export function ModuleGrid() {
     <div
       className={styles.grid}
       ref={gridRef}
-      style={{ ['--grid-cols' as string]: cols }}
+      style={{ ['--grid-cols' as string]: cols, ['--row-unit' as string]: `${ROW_UNIT}px` }}
       data-magnetic={magnetic}
     >
-      {order.map((config) => {
+      {visible.map((config) => {
         const slot = slots.get(config.id);
         const offset =
           liveOffset?.id === config.id
@@ -230,6 +272,7 @@ export function ModuleGrid() {
         return (
           <div
             key={config.id}
+            id={`module-${config.id}`}
             ref={(el) => {
               if (el) cardRefs.current.set(config.id, el);
               else cardRefs.current.delete(config.id);

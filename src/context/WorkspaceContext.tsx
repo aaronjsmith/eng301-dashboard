@@ -7,16 +7,17 @@ import {
   type Dispatch,
   type ReactNode,
 } from 'react';
-import type { FilterState, ModuleConfig } from '../types';
+import type { FilterState, GridSlot, ModuleConfig } from '../types';
 import { BUNDLES, DEFAULT_GLOBAL_FILTERS, DEFAULT_MODULES, type ModuleBundle } from '../data/bundles';
-import { METRICS } from '../metrics/registry';
-import { readStored, writeStored } from '../state/storage';
+import { freshId } from '../state/ids';
+import { clearStored, readStored, writeStored } from '../state/storage';
 
 /**
- * FR3/FR5 — the user's composed workspace: module instances (array order IS
- * the roster auto-placement order), the global filter bar, the magnetic
- * toggle, and the theme. Persisted whole to localStorage (versioned key,
- * silent fallback to defaults on drift).
+ * FR3/FR5 — the user's composed workspace: module instances (array order =
+ * insertion order; layout lives in each module's grid `slot`, resolved by
+ * rosterLayout), the global filter bar, the magnetic toggle, and the theme.
+ * Every launch boots the curated overview (modules and global filters are
+ * session-local); only prefs (theme, magnetic) persist.
  */
 
 export type Theme = 'light' | 'dark';
@@ -33,22 +34,13 @@ export type WorkspaceAction =
   | { type: 'remove-module'; id: string }
   | { type: 'add-module'; config: ModuleConfig }
   | { type: 'add-bundle'; bundle: ModuleBundle; courses: string[] }
-  | { type: 'move-module'; fromIndex: number; toIndex: number }
-  | { type: 'reorder'; ids: string[] }
+  | { type: 'set-layout'; slots: Record<string, GridSlot> }
   | { type: 'set-free-offset'; id: string; offset: { dx: number; dy: number } | null }
   | { type: 'set-global'; filters: FilterState }
   | { type: 'set-magnetic'; value: boolean }
-  | { type: 'remagnetize'; ids: string[] }
+  | { type: 'remagnetize'; slots: Record<string, GridSlot> }
   | { type: 'set-theme'; value: Theme }
   | { type: 'reset-layout' };
-
-function freshId(base: string): string {
-  const suffix =
-    typeof crypto !== 'undefined' && 'randomUUID' in crypto
-      ? crypto.randomUUID().slice(0, 8)
-      : Math.random().toString(36).slice(2, 10);
-  return `${base}-${suffix}`;
-}
 
 function reducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState {
   switch (action.type) {
@@ -71,21 +63,14 @@ function reducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState
           : state.globalFilters;
       return { ...state, modules: [...state.modules, ...added], globalFilters };
     }
-    case 'move-module': {
-      const modules = [...state.modules];
-      const [moved] = modules.splice(action.fromIndex, 1);
-      if (!moved) return state;
-      modules.splice(action.toIndex, 0, moved);
-      return { ...state, modules };
-    }
-    case 'reorder': {
-      const byId = new Map(state.modules.map((m) => [m.id, m]));
-      const ordered = action.ids
-        .map((id) => byId.get(id))
-        .filter((m): m is ModuleConfig => m !== undefined);
-      const missing = state.modules.filter((m) => !action.ids.includes(m.id));
-      return { ...state, modules: [...ordered, ...missing] };
-    }
+    case 'set-layout':
+      // Map-patch: only listed ids move — role-hidden modules keep their slots.
+      return {
+        ...state,
+        modules: state.modules.map((m) =>
+          action.slots[m.id] ? { ...m, slot: action.slots[m.id] } : m,
+        ),
+      };
     case 'set-free-offset':
       return {
         ...state,
@@ -97,21 +82,17 @@ function reducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState
       return { ...state, globalFilters: action.filters };
     case 'set-magnetic':
       return { ...state, magnetic: action.value };
-    case 'remagnetize': {
-      // Toggle-on: ModuleGrid derives nearest-slot order from actual rects and
-      // sends it here; parked offsets clear and the packer resolves collisions.
-      const byId = new Map(state.modules.map((m) => [m.id, m]));
-      const ordered = action.ids
-        .map((id) => byId.get(id))
-        .filter((m): m is ModuleConfig => m !== undefined);
-      const missing = state.modules.filter((m) => !action.ids.includes(m.id));
+    case 'remagnetize':
+      // Toggle-on: ModuleGrid maps parked card rects to their nearest cells;
+      // offsets clear and render-time resolve() sorts out any collisions.
       return {
         ...state,
-        modules: [...ordered, ...missing].map((m) =>
-          m.freeOffset ? { ...m, freeOffset: null } : m,
-        ),
+        modules: state.modules.map((m) => ({
+          ...m,
+          ...(action.slots[m.id] ? { slot: action.slots[m.id] } : {}),
+          ...(m.freeOffset ? { freeOffset: null } : {}),
+        })),
       };
-    }
     case 'set-theme':
       return { ...state, theme: action.value };
     case 'reset-layout':
@@ -121,37 +102,17 @@ function reducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState
         globalFilters: DEFAULT_GLOBAL_FILTERS,
         magnetic: true,
       };
+    default:
+      // Unknown action (e.g. stale HMR dispatching a removed type) must never
+      // collapse the state to undefined.
+      return state;
   }
 }
 
-const DEFAULT_STATE: WorkspaceState = {
-  modules: DEFAULT_MODULES,
-  globalFilters: DEFAULT_GLOBAL_FILTERS,
-  magnetic: true,
-  theme: 'light',
-};
-
-/** Reject stored workspaces whose shape has drifted (unknown metric ids etc.). */
-function sanitizeStored(raw: WorkspaceState): WorkspaceState {
-  if (!raw || !Array.isArray(raw.modules)) return DEFAULT_STATE;
-  const modules = raw.modules.filter(
-    (m): m is ModuleConfig =>
-      typeof m === 'object' &&
-      m !== null &&
-      typeof m.id === 'string' &&
-      typeof m.metric === 'string' &&
-      m.metric in METRICS,
-  );
-  if (modules.length === 0 && raw.modules.length > 0) return DEFAULT_STATE;
-  return {
-    modules,
-    globalFilters:
-      raw.globalFilters && typeof raw.globalFilters === 'object'
-        ? raw.globalFilters
-        : DEFAULT_GLOBAL_FILTERS,
-    magnetic: typeof raw.magnetic === 'boolean' ? raw.magnetic : true,
-    theme: raw.theme === 'dark' ? 'dark' : 'light',
-  };
+/** The slice that survives a reload — layout and filters reset to overview. */
+interface PersistedPrefs {
+  magnetic: boolean;
+  theme: Theme;
 }
 
 interface WorkspaceContextValue extends WorkspaceState {
@@ -162,15 +123,20 @@ interface WorkspaceContextValue extends WorkspaceState {
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(
-    reducer,
-    undefined,
-    () => sanitizeStored(readStored<WorkspaceState>('workspace', DEFAULT_STATE)),
-  );
+  const [state, dispatch] = useReducer(reducer, undefined, (): WorkspaceState => {
+    const prefs = readStored<Partial<PersistedPrefs>>('prefs', {});
+    clearStored('workspace'); // orphaned pre-overview-reset blob
+    return {
+      modules: DEFAULT_MODULES,
+      globalFilters: DEFAULT_GLOBAL_FILTERS,
+      magnetic: typeof prefs.magnetic === 'boolean' ? prefs.magnetic : true,
+      theme: prefs.theme === 'dark' ? 'dark' : 'light',
+    };
+  });
 
   useEffect(() => {
-    writeStored('workspace', state);
-  }, [state]);
+    writeStored<PersistedPrefs>('prefs', { magnetic: state.magnetic, theme: state.theme });
+  }, [state.magnetic, state.theme]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = state.theme;

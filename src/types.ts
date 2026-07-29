@@ -14,6 +14,22 @@ export type Session = 'Spring' | 'Summer' | 'Fall' | 'Winter';
 /** Chronological order used for ordered axes and prior-session baselines. */
 export const SESSION_ORDER: Session[] = ['Spring', 'Summer', 'Fall', 'Winter'];
 
+/** Rows from files without a Year column are tagged as the current year. */
+export const FALLBACK_YEAR = 2026;
+
+/** One term = an academic year + a session within it. */
+export interface Term {
+  year: number;
+  session: Session;
+}
+
+/** The chronologically previous term (Spring rolls to the prior year's Winter). */
+export function priorTerm(term: Term): Term {
+  const idx = SESSION_ORDER.indexOf(term.session);
+  if (idx <= 0) return { year: term.year - 1, session: 'Winter' };
+  return { year: term.year, session: SESSION_ORDER[idx - 1] };
+}
+
 export type Grade =
   | 'A'
   | 'A-'
@@ -43,6 +59,7 @@ export interface StudentRow {
   session: Session;
   score: number;
   grade: Grade;
+  year: number;
 }
 
 /** Where the current rows came from (drives the status-bar chips, FR1/FR2). */
@@ -71,6 +88,7 @@ export interface SyncStatus {
 export type Dimension =
   | 'course'
   | 'courseLevel'
+  | 'year'
   | 'session'
   | 'professor'
   | 'gender'
@@ -111,9 +129,9 @@ export type SizeTier = 'S' | 'M' | 'L';
 export type CompareTo =
   | 'none'
   | 'priorSession'
+  | 'sameTermLastYear'
   | 'courseAvg'
   | 'allCoursesAvg'
-  | 'target'
   | 'peerLevel';
 
 /** Lagging/leading is a property of the metric (registry), rendered as a badge. */
@@ -134,6 +152,12 @@ export interface InvestigatePayload {
   baselineLabel: string;
 }
 
+/** A committed roster cell (top-left of the span); spans derive from size. */
+export interface GridSlot {
+  col: number;
+  row: number;
+}
+
 /** Config for one instance of the repeatable metric module. Fully serializable. */
 export interface ModuleConfig {
   id: string;
@@ -145,6 +169,8 @@ export interface ModuleConfig {
   breakdown: Dimension | 'none';
   /** Module-local filters; compose on top of (never widen) the global scope, FR5. */
   filters: FilterState;
+  /** Desired roster cell; undefined ⇒ auto-place. Only drops/remagnetize commit it. */
+  slot?: GridSlot | null;
   /** Magnetic-off free parking offset; null/undefined when snapped to the roster. */
   freeOffset?: { dx: number; dy: number } | null;
   /** FR4 — undefined means visible to every role. */
@@ -164,7 +190,18 @@ export interface PresetValue {
   formatted: string;
   detail: string;
   target: string;
+  /** Plain-language explanation (incl. target) — shown in the hover tooltip. */
+  description: string;
+  /** Raw primary number — used for trend diffing vs the prior year. */
+  value?: number | null;
   breach?: { severity: Severity; formattedDelta: string };
+  /** FR6 trend direction vs the prior year (single-year scopes only). */
+  trend?: {
+    formattedDelta: string;
+    direction: 'up' | 'down' | 'flat';
+    /** null when flat; colors the chip by direction × higher-is-better. */
+    improving: boolean | null;
+  };
   /** FR4 — undefined means visible to every role (R4 is chair/admin only). */
   roles?: Role[];
   /** K5 stays computed but off-panel; it surfaces via Highlights on breach. */

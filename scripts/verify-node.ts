@@ -36,7 +36,7 @@ const xlsxOk = runSelfTest(rows);
 const csvRows = tables.flatMap((t) =>
   t.rows.map((r) => ({
     Course: t.course,
-    ...Object.fromEntries(CANONICAL_COLUMNS.map((c) => [c, r[c]])),
+    ...Object.fromEntries([...CANONICAL_COLUMNS, 'Year'].map((c) => [c, r[c]])),
   })),
 );
 const csvText = Papa.unparse(csvRows);
