@@ -1,5 +1,6 @@
 import type { SizeTier } from '../../types';
 import type { ChartData, SeriesPoint } from '../../metrics/chartData';
+import { studentsLabel } from '../../metrics/format';
 import {
   BAR_MAX,
   CHART_FONT,
@@ -101,7 +102,7 @@ export function BarChart({ data, size }: BarChartProps) {
                   key={p.key}
                   onMouseMove={
                     size === 'L'
-                      ? (e) => show(e, [`${p.label}: ${p.formatted}`, `n = ${p.n}`])
+                      ? (e) => show(e, [`${p.label}: ${p.formatted}`, studentsLabel(p.n)])
                       : undefined
                   }
                   onMouseLeave={size === 'L' ? hide : undefined}
@@ -136,7 +137,7 @@ export function BarChart({ data, size }: BarChartProps) {
                         rx={MARK.radius}
                         fill={markColor(p.status)}
                       >
-                        <title>{`${p.label}: ${p.formatted} (n=${p.n})`}</title>
+                        <title>{`${p.label}: ${p.formatted} (${studentsLabel(p.n)})`}</title>
                       </rect>
                       {showValue && (
                         <text
@@ -238,7 +239,7 @@ export function BarChart({ data, size }: BarChartProps) {
                 key={p.key}
                 onMouseMove={
                   size === 'L'
-                    ? (e) => show(e, [`${p.label}: ${p.formatted}`, `n = ${p.n}`])
+                    ? (e) => show(e, [`${p.label}: ${p.formatted}`, studentsLabel(p.n)])
                     : undefined
                 }
                 onMouseLeave={size === 'L' ? hide : undefined}
@@ -264,7 +265,7 @@ export function BarChart({ data, size }: BarChartProps) {
                           L ${cx + barW / 2} ${topPad + plotH} Z`}
                       fill={markColor(p.status)}
                     >
-                      <title>{`${p.label}: ${p.formatted} (n=${p.n})`}</title>
+                      <title>{`${p.label}: ${p.formatted} (${studentsLabel(p.n)})`}</title>
                     </path>
                     {showValue && (
                       <text

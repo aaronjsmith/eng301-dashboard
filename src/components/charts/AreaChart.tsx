@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import type { SizeTier } from '../../types';
 import type { ChartData } from '../../metrics/chartData';
+import { studentsLabel } from '../../metrics/format';
 import {
   BAND_COLORS,
   CHART_FONT,
@@ -196,7 +197,7 @@ export function AreaChart({ data, size }: AreaChartProps) {
                 strokeWidth={MARK.gap}
                 onMouseMove={
                   size === 'L'
-                    ? (e) => show(e, [`${p.label}: ${p.formatted}`, `n = ${p.n}`])
+                    ? (e) => show(e, [`${p.label}: ${p.formatted}`, studentsLabel(p.n)])
                     : undefined
                 }
                 onMouseLeave={size === 'L' ? hide : undefined}

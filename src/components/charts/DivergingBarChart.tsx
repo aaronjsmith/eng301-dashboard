@@ -1,5 +1,6 @@
 import type { SizeTier } from '../../types';
 import type { ChartData } from '../../metrics/chartData';
+import { studentsLabel } from '../../metrics/format';
 import { CHART_FONT, MARK, clampNum, shortLabel, useMeasuredSize, useTooltip } from './common';
 import styles from './Chart.module.css';
 
@@ -114,7 +115,7 @@ export function DivergingBarChart({ data, size }: DivergingBarChartProps) {
                         show(e, [
                           `${p.label}: ${p.formatted} pts`,
                           breached ? `Beyond ±${threshold} threshold` : `Within ±${threshold}`,
-                          `n = ${p.n}`,
+                          studentsLabel(p.n),
                         ])
                     : undefined
                 }
@@ -140,7 +141,7 @@ export function DivergingBarChart({ data, size }: DivergingBarChartProps) {
                     fontSize={CHART_FONT.axis}
                     fill="var(--text-muted)"
                   >
-                    n&lt;20
+                    Too few students
                   </text>
                 ) : (
                   <>
@@ -152,7 +153,7 @@ export function DivergingBarChart({ data, size }: DivergingBarChartProps) {
                       rx={MARK.radius / 2}
                       fill={breached ? 'var(--status-critical)' : 'var(--chart-2)'}
                     >
-                      <title>{`${p.label}: ${p.formatted} pts (n=${p.n})`}</title>
+                      <title>{`${p.label}: ${p.formatted} pts (${studentsLabel(p.n)})`}</title>
                     </rect>
                     {showValue && (
                       <text

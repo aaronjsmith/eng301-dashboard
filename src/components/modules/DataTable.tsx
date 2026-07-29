@@ -91,7 +91,7 @@ export function DataTable({ data }: DataTableProps) {
             <tr>
               <th>Group</th>
               <th>{data.metricLabel}</th>
-              <th>n</th>
+              <th>Students</th>
             </tr>
           </thead>
           <tbody>
@@ -99,7 +99,7 @@ export function DataTable({ data }: DataTableProps) {
               <tr key={p.key} data-status={p.status}>
                 <td>{p.label}</td>
                 <td>{p.formatted}</td>
-                <td>{p.suppressed ? `<20` : p.n}</td>
+                <td>{p.suppressed ? 'Fewer than 20' : p.n}</td>
               </tr>
             ))}
           </tbody>

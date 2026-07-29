@@ -1,5 +1,7 @@
 import type { SizeTier } from '../../types';
 import type { ChartData } from '../../metrics/chartData';
+import { studentsLabel, tooFewStudentsLabel } from '../../metrics/format';
+import { SMALL_CELL } from '../../metrics/scope';
 import { THRESHOLDS } from '../../metrics/thresholds';
 import { CHART_FONT, clampNum, inkForBin, useMeasuredSize, useTooltip } from './common';
 import styles from './Chart.module.css';
@@ -20,7 +22,7 @@ const BIN_TOKENS = [
  * Pass-rate surface: course rows × dimension columns, colored by the
  * justification doc's bins (<78 / 78–82 / 82–85 / ≥85) on a one-hue
  * sequential ramp. Every cell prints its value — color is never the only
- * encoding; suppressed cells hatch as "n<20".
+ * encoding; suppressed cells hatch as "too few students".
  */
 export function HeatmapChart({ data, size }: HeatmapChartProps) {
   const [plotRef, measured] = useMeasuredSize<HTMLDivElement>();
@@ -101,8 +103,8 @@ export function HeatmapChart({ data, size }: HeatmapChartProps) {
                             show(e, [
                               `${row} · ${matrix.colLabels[ci]}`,
                               cell.suppressed
-                                ? 'Hidden (fewer than 20 students)'
-                                : `${cell.formatted} · n = ${cell.n}`,
+                                ? `Hidden (${tooFewStudentsLabel(SMALL_CELL).toLowerCase()})`
+                                : `${cell.formatted} · ${studentsLabel(cell.n)}`,
                             ])
                         : undefined
                     }
@@ -117,7 +119,7 @@ export function HeatmapChart({ data, size }: HeatmapChartProps) {
                       fill={cell.suppressed || cell.bin === null ? 'var(--bg-inset)' : BIN_TOKENS[cell.bin]}
                     >
                       <title>
-                        {`${row} × ${matrix.colLabels[ci]}: ${cell.suppressed ? 'n<20 suppressed' : cell.formatted}`}
+                        {`${row} × ${matrix.colLabels[ci]}: ${cell.suppressed ? tooFewStudentsLabel(SMALL_CELL) : cell.formatted}`}
                       </title>
                     </rect>
                     {cell.suppressed && (
@@ -144,7 +146,7 @@ export function HeatmapChart({ data, size }: HeatmapChartProps) {
                             : inkForBin(cell.bin)
                         }
                       >
-                        {cell.suppressed ? 'n<20' : cell.formatted}
+                        {cell.suppressed ? 'Hidden' : cell.formatted}
                       </text>
                     )}
                   </g>

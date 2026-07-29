@@ -18,6 +18,7 @@ import { Tip } from '../ui/Tip';
 import { DataTable } from './DataTable';
 import { InvestigateView } from './InvestigateView';
 import { useDashboardScope } from '../../hooks/useMetrics';
+import { studentsLabel } from '../../metrics/format';
 import styles from './MetricModule.module.css';
 
 interface MetricModuleProps {
@@ -255,7 +256,7 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
       <footer className={styles.footer}>
         <p className={styles.kicker}>{def.label}</p>
         <p className={styles.meta}>
-          n = {data.n}
+          {studentsLabel(data.n)}
           {data.suppressedNote ? ` · ${data.suppressedNote}` : ''}
         </p>
       </footer>

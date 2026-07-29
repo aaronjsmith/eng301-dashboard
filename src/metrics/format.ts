@@ -28,6 +28,16 @@ export function countFmt(value: number): string {
   return String(Math.round(value));
 }
 
+/** Plain-language headcount — never "n = …". */
+export function studentsLabel(n: number): string {
+  return n === 1 ? '1 student' : `${n} students`;
+}
+
+/** Plain-language small-cell suppression (FERPA). */
+export function tooFewStudentsLabel(threshold: number): string {
+  return `Fewer than ${threshold} students`;
+}
+
 export function formatUnit(
   value: number,
   unit: 'percent' | 'points' | 'count' | 'score',

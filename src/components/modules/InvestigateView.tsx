@@ -6,6 +6,7 @@ import { dimensionScan } from '../../metrics/investigate';
 import { metricDef } from '../../metrics/registry';
 import { availableChartTypes } from '../../metrics/availability';
 import { DIMENSION_META, valueLabel } from '../../metrics/scope';
+import { studentsLabel } from '../../metrics/format';
 import styles from './InvestigateView.module.css';
 
 interface InvestigateViewProps {
@@ -63,7 +64,7 @@ export function InvestigateView({ config, onPromote }: InvestigateViewProps) {
         <div className={styles.compareCell}>
           <span className={styles.compareValue}>{scan.sliceFormatted}</span>
           <span className={styles.compareLabel}>
-            {def.label} · slice (n={scan.sliceN})
+            {def.label} · slice ({studentsLabel(scan.sliceN)})
           </span>
         </div>
         <span className={styles.vs}>vs</span>
@@ -78,7 +79,7 @@ export function InvestigateView({ config, onPromote }: InvestigateViewProps) {
       </p>
       {scan.rows.length === 0 ? (
         <p className={styles.emptyScan}>
-          No dimension splits the slice into two reportable groups (n ≥ 20).
+          No dimension splits the slice into two reportable groups (at least 20 students each).
         </p>
       ) : (
         <ol className={styles.scanList}>
@@ -98,8 +99,8 @@ export function InvestigateView({ config, onPromote }: InvestigateViewProps) {
                 </button>
               </div>
               <p className={styles.scanDetail}>
-                {row.lowest.label} {row.lowest.formatted} (n={row.lowest.n}) ·{' '}
-                {row.highest.label} {row.highest.formatted} (n={row.highest.n})
+                {row.lowest.label} {row.lowest.formatted} ({studentsLabel(row.lowest.n)}) ·{' '}
+                {row.highest.label} {row.highest.formatted} ({studentsLabel(row.highest.n)})
                 {row.groupCount > 2 ? ` · ${row.groupCount} groups` : ''}
               </p>
             </li>

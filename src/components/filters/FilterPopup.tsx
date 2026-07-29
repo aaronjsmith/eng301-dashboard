@@ -9,6 +9,7 @@ import {
   SMALL_CELL,
   valueLabel,
 } from '../../metrics/scope';
+import { tooFewStudentsLabel } from '../../metrics/format';
 import styles from './FilterPopup.module.css';
 
 interface FilterPopupProps {
@@ -124,7 +125,7 @@ export function FilterPopup({ scopeRows, filters, onApply, onClose }: FilterPopu
                       />
                       <span>{valueLabel(dim, value)}</span>
                       <span className={styles.count}>
-                        {tooSmall ? `n<${SMALL_CELL}` : n}
+                        {tooSmall ? tooFewStudentsLabel(SMALL_CELL) : n}
                       </span>
                     </label>
                   );

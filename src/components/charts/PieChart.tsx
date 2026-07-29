@@ -1,5 +1,6 @@
 import type { SizeTier } from '../../types';
 import type { ChartData, SeriesPoint } from '../../metrics/chartData';
+import { studentsLabel } from '../../metrics/format';
 import { BAND_COLORS, clampNum, inkForBin, useMeasuredSize, useTooltip } from './common';
 import styles from './Chart.module.css';
 
@@ -77,12 +78,12 @@ export function PieChart({ data, size }: PieChartProps) {
                 fill={a.color}
                 onMouseMove={
                   size === 'L'
-                    ? (e) => show(e, [`${a.slice.label}: ${a.slice.formatted}`, `n = ${a.slice.n}`])
+                    ? (e) => show(e, [`${a.slice.label}: ${a.slice.formatted}`, studentsLabel(a.slice.n)])
                     : undefined
                 }
                 onMouseLeave={size === 'L' ? hide : undefined}
               >
-                <title>{`${a.slice.label}: ${a.slice.formatted} (n=${a.slice.n})`}</title>
+                <title>{`${a.slice.label}: ${a.slice.formatted} (${studentsLabel(a.slice.n)})`}</title>
               </path>
             ))}
           </g>

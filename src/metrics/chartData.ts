@@ -18,7 +18,7 @@ import {
 import { gradeBandShares, passRate } from './formulas';
 import { flagStudents } from './flags';
 import { metricDef, type MetricUnit } from './registry';
-import { formatUnit, percent1 } from './format';
+import { formatUnit, percent1, tooFewStudentsLabel } from './format';
 import { THRESHOLDS } from './thresholds';
 
 /**
@@ -225,7 +225,7 @@ function stripDimensions(config: ModuleConfig, ...dims: Dimension[]) {
 
 function suppress(unit: MetricUnit, value: number | null, n: number): Pick<SeriesPoint, 'value' | 'formatted' | 'suppressed'> {
   if (n > 0 && n < SMALL_CELL) {
-    return { value: null, formatted: `n<${SMALL_CELL}`, suppressed: true };
+    return { value: null, formatted: tooFewStudentsLabel(SMALL_CELL), suppressed: true };
   }
   if (value === null) return { value: null, formatted: '—', suppressed: false };
   return { value, formatted: formatUnit(value, unit), suppressed: false };
@@ -250,12 +250,12 @@ export function buildChartData(config: ModuleConfig, ctx: ChartDataContext): Cha
   const hero = {
     value: heroSuppressed ? null : heroValue,
     formatted: heroSuppressed
-      ? `n<${SMALL_CELL}`
+      ? tooFewStudentsLabel(SMALL_CELL)
       : heroValue !== null
         ? formatUnit(heroValue, def.unit)
         : '—',
     sub: heroSuppressed
-      ? 'Cell too small to report (FERPA)'
+      ? 'Too few students to show (privacy)'
       : heroSub(config, population),
   };
 
@@ -365,9 +365,9 @@ export function buildChartData(config: ModuleConfig, ctx: ChartDataContext): Cha
     n: population.length,
     suppressedNote:
       suppressedCells > 0
-        ? `${suppressedCells} group${suppressedCells > 1 ? 's' : ''} under n=${SMALL_CELL} suppressed`
+        ? `${suppressedCells} group${suppressedCells > 1 ? 's' : ''} with ${tooFewStudentsLabel(SMALL_CELL).toLowerCase()} hidden`
         : heroSuppressed
-          ? `Population under n=${SMALL_CELL} — aggregate only`
+          ? `${tooFewStudentsLabel(SMALL_CELL)} — totals only`
           : undefined,
     tableRows,
   };
