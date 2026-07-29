@@ -1,32 +1,42 @@
-# React + TypeScript + Vite
+# ENG 301 Student Outcomes Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + TypeScript SPA (Vite) for Ensign College ENG 201 core competency throughput. Deployable as a Cloudflare Worker with static assets.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Or use the platform launchers: `win_run.bat`, `mac_run.command`, `linux_run.sh`.
+
+## Build
+
+```bash
+npm run build
+npm run preview
+```
+
+## Deploy to Cloudflare Workers
+
+Requires a Cloudflare account and Wrangler auth (`npx wrangler login`).
+
+```bash
+npm run deploy
+```
+
+This builds the SPA and deploys it via Wrangler. SPA routing uses `assets.not_found_handling: "single-page-application"` in `wrangler.jsonc`.
+
+To add a Worker API later, set `"main"` in `wrangler.jsonc` to a Worker entry (for example `./worker/index.ts`).
+
+## Scripts
+
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Vite dev server (Cloudflare plugin) |
+| `npm run build` | Typecheck + production build |
+| `npm run preview` | Preview production build |
+| `npm run deploy` | Build and deploy to Cloudflare Workers |
+| `npm run cf-typegen` | Generate Worker types from Wrangler |
+| `npm run lint` | Oxlint |

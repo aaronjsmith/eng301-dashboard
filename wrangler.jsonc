@@ -1,0 +1,8 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "eng301-dashboard",
+  "compatibility_date": "2026-07-29",
+  "assets": {
+    "not_found_handling": "single-page-application"
+  }
+}
