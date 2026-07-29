@@ -13,7 +13,7 @@ export function TitleBar() {
         />
         <div>
           <h1 className={styles.title}>Student Outcomes Dashboard</h1>
-          <p className={styles.subtitle}>ENG 201 · how students are doing</p>
+          <p className={styles.subtitle}>ENG 201 · Core Competency Throughput</p>
         </div>
       </div>
       <ViewSwitcher />

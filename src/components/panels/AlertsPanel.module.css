@@ -71,6 +71,8 @@
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .evidence {

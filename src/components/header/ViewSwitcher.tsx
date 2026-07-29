@@ -36,7 +36,7 @@ export function ViewSwitcher() {
           <select
             value={facultyProfessor}
             onChange={(e) => setFacultyProfessor(e.target.value)}
-            aria-label="Which teacher you are viewing as"
+            aria-label="Faculty professor"
           >
             {professors.map((p) => (
               <option key={p} value={p}>

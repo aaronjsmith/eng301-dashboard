@@ -32,7 +32,8 @@
 .compare {
   display: flex;
   align-items: center;
-  gap: 14px;
+  flex-wrap: wrap;
+  gap: 10px 14px;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   background: var(--bg-inset);
@@ -95,6 +96,7 @@
 .scanHead {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -112,9 +114,13 @@
 }
 
 .dimLabel {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .gap {

@@ -54,9 +54,9 @@ export function ExportButton({ onExport }: ExportButtonProps) {
       {open && (
         <div className={styles.menu} role="menu" aria-label="Export mode">
           <button type="button" role="menuitem" className={styles.item} onClick={() => pick('report')}>
-            <span className={styles.itemTitle}>Summary report</span>
+            <span className={styles.itemTitle}>Pertinent report</span>
             <span className={styles.itemSub}>
-              One-page PDF: goal numbers plus every warning that needs attention, with its chart
+              One-page PDF: KPI values + every breached KRI with its chart
             </span>
           </button>
           <button type="button" role="menuitem" className={styles.item} onClick={() => pick('view')}>
