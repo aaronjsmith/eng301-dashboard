@@ -76,9 +76,15 @@ export function PresetsPanel() {
                 onClick={() => openPreset(preset)}
               >
                 <span className={styles.presetLabel}>{preset.label}</span>
-                <span className={styles.presetValue}>{preset.formatted}</span>
-                <span className={styles.tag}>
-                  {preset.kind === 'kpi' ? 'Goal' : 'Warning'}
+                <span className={styles.presetMeta}>
+                  <span className={styles.presetValue}>{preset.formatted}</span>
+                  <span
+                    className={
+                      preset.kind === 'kpi' ? styles.tagGoal : styles.tagWarn
+                    }
+                  >
+                    {preset.kind === 'kpi' ? 'Goal' : 'Warning'}
+                  </span>
                 </span>
               </button>
             </Tip>
