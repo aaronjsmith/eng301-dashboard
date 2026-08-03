@@ -1,10 +1,8 @@
 import type { HighlightItem, StudentRow } from '../types';
 import {
-  ageSessionRisk,
   demographicPassGap,
   genderPassGap,
   genderScoreGap,
-  meanAge,
   midBandShare,
   passRate,
 } from './formulas';
@@ -34,33 +32,6 @@ const min20 = (n: number) => n >= SMALL_CELL;
 const RULES: HighlightRule[] = [
   // ── Critical ────────────────────────────────────────────────────────────
   {
-    // R3 — young summer students
-    evaluate({ scopeRows }) {
-      const r3 = ageSessionRisk(scopeRows);
-      if (!r3.cellPass || !r3.otherPass || !min20(r3.cellPass.n)) return null;
-      const breached =
-        (r3.passGap !== null && r3.passGap >= THRESHOLDS.equityGapMax) ||
-        (r3.scoreGap !== null && r3.scoreGap >= THRESHOLDS.equityGapMax);
-      if (!breached) return null;
-      return {
-        id: 'hl-summer-young',
-        label: 'Young Summer students are failing much more often',
-        evidence: `Ages 18–21 in Summer pass ${percent1(r3.cellPass.rate)}, vs ${percent1(r3.otherPass.rate)} for everyone else (scores ${r3.cellScore !== null ? score1(r3.cellScore) : '—'} vs ${r3.otherScore !== null ? score1(r3.otherScore) : '—'}). The problem is the mix of young + Summer — not age or Summer alone.`,
-        severity: 'critical',
-        category: 'session',
-        roles: ['faculty', 'chair', 'admin'],
-        linkedPresetId: 'R3',
-        investigate: {
-          highlightId: 'hl-summer-young',
-          metric: 'passRate',
-          slice: { ageBand: ['18–21'], session: ['Summer'] },
-          baseline: { session: ['Spring', 'Fall', 'Winter'] },
-          baselineLabel: 'Non-summer sessions',
-        },
-      };
-    },
-  },
-  {
     // R1 — per-professor hidden gender gap
     evaluate({ scopeRows }) {
       const candidates = [...groupBy(scopeRows, 'professor')]
@@ -85,36 +56,6 @@ const RULES: HighlightRule[] = [
         investigate: {
           highlightId: 'hl-prof-gender-gap',
           metric: 'genderGap',
-          slice: { professor: [worst.prof] },
-          baseline: {},
-          baselineLabel: 'All professors in this view',
-        },
-      };
-    },
-  },
-  {
-    // R2 — all-or-nothing grading
-    evaluate({ scopeRows }) {
-      const candidates = [...groupBy(scopeRows, 'professor')]
-        .map(([prof, rows]) => ({ prof, mid: midBandShare(rows), pr: passRate(rows), n: rows.length }))
-        .filter((c) => c.mid !== null && min20(c.n) && c.mid < THRESHOLDS.midBandMin);
-      if (candidates.length === 0) return null;
-      const worst = candidates.reduce((a, b) => (b.mid! < a.mid! ? b : a));
-      const allFails = scopeRows.filter((r) => !r.pass);
-      const profFails = allFails.filter((r) => r.professor === worst.prof);
-      const failShare =
-        allFails.length > 0 ? Math.round((profFails.length / allFails.length) * 100) : 0;
-      return {
-        id: 'hl-prof-bimodal',
-        label: `${worst.prof} grades with almost no middle scores`,
-        evidence: `Only ${percent1(worst.mid!)} of grades are in the 70–89 middle range (healthy is often around 70%), even though the pass rate looks normal at ${worst.pr ? percent1(worst.pr.rate) : '—'}. ${worst.prof}'s sections account for ${profFails.length} of ${allFails.length} fails in this view (${failShare}%).`,
-        severity: 'critical',
-        category: 'instructor',
-        roles: ['chair', 'admin'],
-        linkedPresetId: 'R2',
-        investigate: {
-          highlightId: 'hl-prof-bimodal',
-          metric: 'midBandShare',
           slice: { professor: [worst.prof] },
           baseline: {},
           baselineLabel: 'All professors in this view',
@@ -255,30 +196,6 @@ const RULES: HighlightRule[] = [
       };
     },
   },
-  {
-    // R3-family — failing students skew younger
-    evaluate({ scopeRows }) {
-      const failing = meanAge(scopeRows.filter((r) => !r.pass));
-      const passing = meanAge(scopeRows.filter((r) => r.pass));
-      if (failing === null || passing === null || passing - failing < 2) return null;
-      return {
-        id: 'hl-age-fail',
-        label: 'Students who fail are often younger',
-        evidence: `Average age of failing students is ${score1(failing)} vs ${score1(passing)} for students who pass — age is a risk signal beyond Summer alone.`,
-        severity: 'notable',
-        category: 'session',
-        roles: ['faculty', 'chair', 'admin'],
-        linkedPresetId: 'R3',
-        investigate: {
-          highlightId: 'hl-age-fail',
-          metric: 'passRate',
-          slice: { ageBand: ['18–21'] },
-          baseline: { ageBand: ['22–26', '27+'] },
-          baselineLabel: 'Students 22+',
-        },
-      };
-    },
-  },
   // ── Context ─────────────────────────────────────────────────────────────
   {
     // Healthy benchmark professor
@@ -309,7 +226,7 @@ const RULES: HighlightRule[] = [
         severity: 'context',
         category: 'instructor',
         roles: ['chair', 'admin'],
-        linkedPresetId: 'R2',
+        linkedPresetId: 'K1',
       };
     },
   },

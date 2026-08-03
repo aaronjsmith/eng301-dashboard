@@ -10,12 +10,8 @@ export const GLOSSARY = {
     title: 'Opportunities number',
     body: 'A score that flags a problem early — like a big gap between groups. You want these to stay small or quiet.',
   },
-  lagging: {
-    title: 'After-the-fact number',
-    body: 'Looks at results that already happened (like final pass rates). It tells you what finished, not what is coming next.',
-  },
   leading: {
-    title: 'Early opportunities number',
+    title: 'Opportunities number',
     body: 'Moves before final grades are locked in. Use it to spot trouble early.',
   },
   smallCell: {

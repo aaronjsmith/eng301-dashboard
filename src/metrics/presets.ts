@@ -1,15 +1,12 @@
 import type { PresetValue, StudentRow } from '../types';
 import {
-  ageSessionRisk,
   demographicPassGap,
   dfwRate,
   enrollmentBySession,
   genderScoreGap,
   intensityGap,
   meanScore,
-  midBandShare,
   passRate,
-  passRateSpread,
 } from './formulas';
 import { groupBy, SMALL_CELL } from './scope';
 import { percent1, score1, signedPoints } from './format';
@@ -17,9 +14,9 @@ import { THRESHOLDS } from './thresholds';
 
 /**
  * The preset panel (FR3) — the non-configurable metrics every viewer gets,
- * computed the same way every time. Panel order K1–K4 then R1–R4 per the
- * spec's mapping table; K5 is computed but off-panel (Highlights surfaces it
- * on breach). KRI breaches are 'critical'; KPI target misses are 'notable'.
+ * computed the same way every time. Panel order K1–K4 then R1, R4;
+ * K5 is computed but off-panel (Highlights surfaces it on breach).
+ * KRI breaches are 'critical'; KPI target misses are 'notable'.
  * Scoped to the global filter (default ENG201; Course chip can include MAT110).
  */
 
@@ -127,69 +124,6 @@ function buildPresets(scopeRows: StudentRow[]): PresetValue[] {
         : undefined,
   });
 
-  // R2 — grade-distribution anomaly: min mid-band share + professor spread
-  const r2Groups = [...groupBy(scopeRows, 'professor')]
-    .map(([prof, rows]) => ({ prof, mid: midBandShare(rows), n: rows.length }))
-    .filter((g) => g.mid !== null && g.n >= SMALL_CELL);
-  const r2Worst =
-    r2Groups.length > 0
-      ? r2Groups.reduce((a, b) => (b.mid! < a.mid! ? b : a))
-      : null;
-  const r2Spread = passRateSpread(scopeRows, 'professor');
-  const r2MidBreach = r2Worst !== null && r2Worst.mid! < THRESHOLDS.midBandMin;
-  const r2SpreadBreach =
-    r2Spread !== null && r2Spread.spread > THRESHOLDS.professorSpreadMax;
-  presets.push({
-    id: 'R2',
-    label: 'Uneven grade pattern',
-    kind: 'kri',
-    metric: 'midBandShare',
-    value: r2Worst ? r2Worst.mid! : null,
-    formatted: r2Worst ? `${percent1(r2Worst.mid!)} mid scores` : '—',
-    detail: r2Worst
-      ? `${r2Worst.prof}: share scoring 70–89 (healthy is often 60–75%)`
-      : 'Groups under 20 students are hidden for privacy',
-    target: 'Mid scores ≥ 25% · spread ≤ 15 pts',
-    description:
-      'Flags odd grading shapes — few middle scores (70–89), or professors with very different pass rates. Goal: enough middle scores, and professors not more than 15 points apart.',
-    breach:
-      r2MidBreach || r2SpreadBreach
-        ? {
-            severity: 'critical',
-            formattedDelta: r2MidBreach
-              ? signedPoints(r2Worst!.mid! - THRESHOLDS.midBandMin)
-              : signedPoints(r2Spread!.spread),
-          }
-        : undefined,
-  });
-
-  // R3 — age-band × session risk (18–21 × Summer)
-  const r3 = ageSessionRisk(scopeRows);
-  const r3Breached =
-    (r3.passGap !== null && r3.passGap >= THRESHOLDS.equityGapMax) ||
-    (r3.scoreGap !== null && r3.scoreGap >= THRESHOLDS.equityGapMax);
-  presets.push({
-    id: 'R3',
-    label: 'Young students in Summer',
-    kind: 'kri',
-    metric: 'passRate',
-    value: r3.passGap,
-    formatted:
-      r3.cellPass && r3.otherPass
-        ? `${percent1(r3.cellPass.rate)} vs ${percent1(r3.otherPass.rate)}`
-        : '—',
-    detail:
-      r3.cellScore !== null && r3.otherScore !== null
-        ? `Scores ${score1(r3.cellScore)} vs ${score1(r3.otherScore)}`
-        : 'No 18–21 Summer students in this view',
-    target: 'Gap < 5 pts',
-    description:
-      'Compares 18–21-year-olds in Summer with everyone else. This mix is a known risk. Goal: gap under 5 points.',
-    breach: r3Breached
-      ? { severity: 'critical', formattedDelta: signedPoints(-(r3.passGap ?? 0)) }
-      : undefined,
-  });
-
   // R4 — first-gen / Pell pass gap (chair/admin only — FERPA small cells)
   const firstGen = demographicPassGap(scopeRows, 'firstGen');
   const pell = demographicPassGap(scopeRows, 'pell');
@@ -264,8 +198,6 @@ const TREND_SENSE: Record<string, 'higher' | 'lower' | 'shrinkAbs'> = {
   K3: 'lower',
   K4: 'higher',
   R1: 'shrinkAbs',
-  R2: 'higher',
-  R3: 'lower',
   R4: 'shrinkAbs',
   K5: 'shrinkAbs',
 };

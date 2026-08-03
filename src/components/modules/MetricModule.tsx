@@ -112,11 +112,11 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
           >
             <h3 className={styles.title}>{config.title}</h3>
           </Tip>
-          <Tip content={GLOSSARY[def.indicator]}>
-            <span className={styles.indicator}>
-              {def.indicator === 'lagging' ? 'After the fact' : 'Opportunities'}
-            </span>
-          </Tip>
+          {def.indicator === 'leading' && (
+            <Tip content={GLOSSARY.leading}>
+              <span className={styles.indicator}>Opportunities</span>
+            </Tip>
+          )}
         </div>
         <div className={styles.headActions}>
           <div className={styles.filterWrap}>

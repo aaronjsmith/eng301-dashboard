@@ -32,22 +32,6 @@ const BREACH_CHARTS: Record<string, Omit<ModuleConfig, 'id' | 'title'>> = {
     breakdown: 'professor',
     filters: {},
   },
-  R2: {
-    metric: 'midBandShare',
-    chartType: 'bars',
-    size: 'M',
-    compareTo: 'none',
-    breakdown: 'professor',
-    filters: {},
-  },
-  R3: {
-    metric: 'passRate',
-    chartType: 'bars',
-    size: 'M',
-    compareTo: 'courseAvg',
-    breakdown: 'ageBand',
-    filters: { session: ['Summer'] },
-  },
   R4: {
     metric: 'passRate',
     chartType: 'bars',
