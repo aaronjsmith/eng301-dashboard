@@ -48,8 +48,9 @@ const CHART_LABEL: Record<ChartType, string> = {
 /**
  * THE repeatable module — every blue box is one of these, instantiated from a
  * ModuleConfig. Controls scale with the size tier (S: filter badge only;
- * M: + the two comparison dropdowns; L: full row + data-table toggle); hidden
- * controls stay active — a filtered S-tile still shows filtered numbers (FR5).
+ * M: + the two comparison dropdowns; L: full chart-type row); the student-list
+ * toggle stays available at every size. Hidden controls stay active — a
+ * filtered S-tile still shows filtered numbers (FR5).
  */
 export function MetricModule({ config, onDragStart, dragging }: MetricModuleProps) {
   const { dispatch } = useWorkspace();
@@ -113,7 +114,7 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
           </Tip>
           <Tip content={GLOSSARY[def.indicator]}>
             <span className={styles.indicator}>
-              {def.indicator === 'lagging' ? 'After the fact' : 'Early warning'}
+              {def.indicator === 'lagging' ? 'After the fact' : 'Opportunities'}
             </span>
           </Tip>
         </div>
@@ -237,7 +238,7 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
         )}
       </div>
 
-      {size === 'L' && !isInvestigate && (
+      {!isInvestigate && (
         <div className={styles.tableRow}>
           <button
             type="button"

@@ -53,7 +53,7 @@ export function AddModuleSlot() {
         title: 'New chart',
         metric: 'passRate',
         chartType: 'donut',
-        size: 'S',
+        size: 'M',
         compareTo: 'none',
         breakdown: 'none',
         filters: {},

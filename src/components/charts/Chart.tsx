@@ -78,6 +78,15 @@ export function Chart({ type, size, data }: ChartProps) {
       {type !== 'donut' && size !== 'S' && (
         <p className={styles.heroSub}>{data.hero.sub}</p>
       )}
+      {data.flagCounts && (
+        <p className={styles.flagLegend} aria-label="Failing and marginal counts">
+          <span className={styles.flagFail}>{data.flagCounts.fail} failing</span>
+          <span className={styles.flagSep} aria-hidden="true">
+            ·
+          </span>
+          <span className={styles.flagMarginal}>{data.flagCounts.marginal} marginal</span>
+        </p>
+      )}
     </div>
   );
 }

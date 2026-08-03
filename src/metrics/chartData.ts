@@ -67,6 +67,8 @@ export interface ChartData {
   suppressedNote?: string;
   /** Faculty-only named rows for the L-tier table (FR6). */
   tableRows?: { row: StudentRow; flag?: FlagLevel }[];
+  /** FR6 flag totals — pass-rate modules show failing/marginal with list colors. */
+  flagCounts?: { fail: number; marginal: number };
 }
 
 export interface ChartDataContext {
@@ -331,6 +333,12 @@ export function buildChartData(config: ModuleConfig, ctx: ChartDataContext): Cha
     tableRows = population.map((row) => ({ row, flag: flags.get(row) }));
   }
 
+  let flagCounts: ChartData['flagCounts'];
+  if (config.metric === 'passRate') {
+    const f = flagStudents(population).counts;
+    flagCounts = { fail: f.fail, marginal: f.marginal };
+  }
+
   const suppressedCells = points.filter((p) => p.suppressed).length;
   return {
     metricLabel: def.label,
@@ -351,5 +359,6 @@ export function buildChartData(config: ModuleConfig, ctx: ChartDataContext): Cha
           ? `${tooFewStudentsLabel(SMALL_CELL)} — totals only`
           : undefined,
     tableRows,
+    flagCounts,
   };
 }

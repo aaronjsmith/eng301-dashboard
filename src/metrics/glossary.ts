@@ -7,7 +7,7 @@ export const GLOSSARY = {
     body: 'A score that shows how well students are doing. Higher (or hitting the goal) is good.',
   },
   kri: {
-    title: 'Warning number',
+    title: 'Opportunities number',
     body: 'A score that flags a problem early — like a big gap between groups. You want these to stay small or quiet.',
   },
   lagging: {
@@ -15,7 +15,7 @@ export const GLOSSARY = {
     body: 'Looks at results that already happened (like final pass rates). It tells you what finished, not what is coming next.',
   },
   leading: {
-    title: 'Early warning number',
+    title: 'Early opportunities number',
     body: 'Moves before final grades are locked in. Use it to spot trouble early.',
   },
   smallCell: {

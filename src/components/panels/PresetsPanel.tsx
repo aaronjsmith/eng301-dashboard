@@ -83,7 +83,7 @@ export function PresetsPanel() {
                       preset.kind === 'kpi' ? styles.tagGoal : styles.tagWarn
                     }
                   >
-                    {preset.kind === 'kpi' ? 'Goal' : 'Warning'}
+                    {preset.kind === 'kpi' ? 'Goal' : 'Opportunities'}
                   </span>
                 </span>
               </button>
