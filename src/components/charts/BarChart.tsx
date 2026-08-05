@@ -20,10 +20,23 @@ interface BarChartProps {
   onSelect?: (key: string | null) => void;
 }
 
+/** Approx width of one character at CHART_FONT.label. */
+const LABEL_CHAR_PX = 6.6;
+
+/** Nested split labels use " · " — wrap after the first part when present. */
+function labelLines(label: string, maxChars: number): string[] {
+  const parts = label.split(' · ');
+  if (parts.length === 1) return [shortLabel(label, maxChars)];
+  const first = shortLabel(parts[0], Math.max(8, Math.floor(maxChars * 0.55)));
+  const rest = shortLabel(parts.slice(1).join(' · '), maxChars);
+  return [first, rest];
+}
+
 /**
  * Horizontal category bars — labels left, pill bars, values at the tip,
  * optional dashed Compare-to reference. Click a bar to filter the student
- * list to that mark (click again to clear).
+ * list to that mark (click again to clear). Label column grows with nested
+ * split names; tall series scroll instead of crushing bar height.
  */
 export function BarChart({ data, size, selectedKey = null, onSelect }: BarChartProps) {
   const [plotRef, measured] = useMeasuredSize<HTMLDivElement>();
@@ -56,21 +69,34 @@ export function BarChart({ data, size, selectedKey = null, onSelect }: BarChartP
   const ticks = niceTicks(maxValue);
   const scaleMax = ticks.at(-1) || 1;
 
-  const labelW = size === 'S' ? 64 : 100;
-  const valueW = size === 'S' ? 36 : 52;
+  const nested = visible.some((p) => p.label.includes(' · '));
+  const longest = Math.max(...visible.map((p) => p.label.length), 4);
+  const idealLabelW = longest * LABEL_CHAR_PX + (nested ? 12 : 18);
+  const labelCap =
+    size === 'S' ? Math.min(100, width * 0.38) : Math.min(260, width * 0.48);
+  const labelW = clampNum(
+    idealLabelW,
+    size === 'S' ? 56 : nested ? 120 : 90,
+    labelCap,
+  );
+  const maxLabelChars = Math.max(8, Math.floor((labelW - 12) / LABEL_CHAR_PX));
+
+  const valueW = size === 'S' ? 36 : 56;
   const topPad = size === 'S' ? 2 : 6;
   const bottomPad = size === 'S' ? 2 : 6;
-  const rowFloor = size === 'S' ? 22 : size === 'M' ? 36 : 44;
+  // Nested labels need a taller row floor so the second line stays readable.
+  const rowFloor = size === 'S' ? 22 : size === 'M' ? (nested ? 40 : 36) : nested ? 48 : 44;
   const rowCeil = size === 'S' ? 32 : size === 'M' ? 56 : 68;
-  const rowH = clampNum(
-    measured.height
-      ? (measured.height - topPad - bottomPad) / Math.max(visible.length, 1)
-      : rowFloor,
-    rowFloor,
-    rowCeil,
+  const availableH = measured.height || rowFloor * visible.length;
+  const fitted = availableH / Math.max(visible.length, 1);
+  // Prefer readable rows; if they overflow the card, scroll instead of squashing.
+  const rowH = fitted >= rowFloor ? clampNum(fitted, rowFloor, rowCeil) : rowFloor;
+  const needsScroll = topPad + visible.length * rowH + bottomPad > availableH + 1;
+  const barH = Math.min(
+    BAR_MAX[size],
+    Math.max(10, rowH - (size === 'S' ? 8 : nested ? 18 : 14)),
   );
-  const barH = Math.min(BAR_MAX[size], Math.max(10, rowH - (size === 'S' ? 8 : 14)));
-  const chartW = Math.max(width - labelW - valueW, 48);
+  const chartW = Math.max(width - labelW - valueW, 64);
   const height = topPad + visible.length * rowH + bottomPad;
   const x = (v: number) => (v / scaleMax) * chartW;
   const axisBottom = topPad + visible.length * rowH - 4;
@@ -82,7 +108,11 @@ export function BarChart({ data, size, selectedKey = null, onSelect }: BarChartP
 
   return (
     <div className={styles.host} data-chart="bars">
-      <div ref={setPlotRef} className={styles.plot}>
+      <div
+        ref={setPlotRef}
+        className={styles.plot}
+        data-scroll={needsScroll || undefined}
+      >
         <svg
           className={styles.svg}
           viewBox={`0 0 ${width} ${height}`}
@@ -123,6 +153,10 @@ export function BarChart({ data, size, selectedKey = null, onSelect }: BarChartP
             const barW = p.suppressed ? 0 : x(p.value ?? 0);
             const cy = y + rowH / 2;
             const dimmed = selectedKey !== null && selectedKey !== p.key;
+            const lines = labelLines(p.label, maxLabelChars);
+            const lineGap = 12;
+            const labelBlockH = lines.length * lineGap;
+            const labelTop = cy - labelBlockH / 2 + lineGap * 0.35;
             return (
               <g
                 key={p.key}
@@ -148,16 +182,21 @@ export function BarChart({ data, size, selectedKey = null, onSelect }: BarChartP
                 }
                 onMouseLeave={size === 'L' ? hide : undefined}
               >
-                <text
-                  x={labelW - 10}
-                  y={cy}
-                  textAnchor="end"
-                  dominantBaseline="middle"
-                  fontSize={CHART_FONT.label}
-                  fill="var(--text-secondary)"
-                >
-                  {shortLabel(p.label, size === 'S' ? 9 : 14)}
-                </text>
+                <title>{`${p.label}: ${p.formatted} (${studentsLabel(p.n)})`}</title>
+                {lines.map((line, li) => (
+                  <text
+                    key={li}
+                    x={labelW - 10}
+                    y={labelTop + li * lineGap}
+                    textAnchor="end"
+                    dominantBaseline="middle"
+                    fontSize={li === 0 ? CHART_FONT.label : CHART_FONT.axis}
+                    fontWeight={li === 0 ? 600 : 400}
+                    fill="var(--text-secondary)"
+                  >
+                    {line}
+                  </text>
+                ))}
                 {p.suppressed ? (
                   <text
                     x={labelW + 6}
@@ -177,9 +216,7 @@ export function BarChart({ data, size, selectedKey = null, onSelect }: BarChartP
                       height={barH}
                       rx={barH / 2}
                       fill={markColor(p.status)}
-                    >
-                      <title>{`${p.label}: ${p.formatted} (${studentsLabel(p.n)})`}</title>
-                    </rect>
+                    />
                     {size !== 'S' && (
                       <text
                         x={labelW + Math.max(barW, barH) + 8}

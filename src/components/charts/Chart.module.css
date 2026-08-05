@@ -38,6 +38,13 @@
   overflow: hidden;
 }
 
+/* Tall nested-split series: keep readable row height and scroll the plot. */
+.plot[data-scroll] {
+  justify-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .centered {
   display: flex;
   align-items: center;
@@ -47,6 +54,8 @@
 .svg {
   display: block;
   width: 100%;
+  height: auto;
+  flex: 0 0 auto;
 }
 
 .heroRow {

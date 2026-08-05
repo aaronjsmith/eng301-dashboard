@@ -26,6 +26,12 @@
   overflow: hidden;
 }
 
+/* Nested splits need more vertical room for readable multi-line labels. */
+.card[data-solo] .chart[data-deep-split] {
+  min-height: 260px;
+  max-height: 58%;
+}
+
 .card[data-solo] .tableRow {
   flex: 1 1 auto;
   min-height: 120px;
@@ -92,7 +98,7 @@
 
 .description {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.4;
   color: var(--text-secondary);
   overflow-wrap: anywhere;
@@ -283,6 +289,10 @@
 .card[data-table-open] .chart {
   flex: 1 0 auto;
   min-height: 180px;
+}
+
+.card[data-table-open] .chart[data-deep-split] {
+  min-height: 240px;
 }
 
 .tableToggle {

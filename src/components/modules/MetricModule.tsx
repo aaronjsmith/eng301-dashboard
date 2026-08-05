@@ -300,7 +300,10 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
         </div>
       )}
 
-      <div className={styles.chart}>
+      <div
+        className={styles.chart}
+        data-deep-split={activeSplits.length >= 2 || undefined}
+      >
         {isInvestigate ? (
           <InvestigateView config={config} onPromote={patch} />
         ) : (
