@@ -56,13 +56,44 @@
 .table th {
   position: sticky;
   top: 0;
-  padding: 5px 9px;
+  padding: 0;
   background: var(--bg-inset);
   text-align: left;
   font-weight: 700;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
+}
+
+.sortBtn,
+.sortBtnActive {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  padding: 5px 9px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sortBtn:hover,
+.sortBtnActive {
+  color: var(--accent-module);
+  background: var(--accent-module-soft);
+}
+
+.sortMark {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+.sortBtnActive .sortMark {
+  opacity: 1;
 }
 
 .table td {
