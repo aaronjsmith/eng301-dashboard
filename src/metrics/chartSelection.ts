@@ -1,4 +1,4 @@
-import type { Dimension, FlagLevel, MetricId, StudentRow } from '../types';
+import type { Dimension, FilterState, FlagLevel, MetricId, StudentRow } from '../types';
 import { gradeBandOf } from './formulas';
 import { dimensionValue } from './scope';
 
@@ -14,6 +14,41 @@ export function encodeChartKey(parts: string[]): string {
 
 export function decodeChartKey(key: string): string[] {
   return key.split(KEY_SEP);
+}
+
+/** Active split dimensions for a module (primary + then-bys). */
+export function splitDimensions(
+  breakdown: Dimension | 'none',
+  thenBy: Dimension[] = [],
+): Dimension[] {
+  if (breakdown === 'none') return [];
+  return [breakdown, ...thenBy.filter((d) => d !== breakdown)];
+}
+
+/**
+ * Turn a clicked chart mark into module filters that pin that group.
+ * Returns null for composition marks (pass/fail/marginal, grade bands)
+ * that are not dimension values.
+ */
+export function filtersFromChartKey(
+  key: string,
+  breakdown: Dimension | 'none',
+  thenBy: Dimension[] = [],
+): FilterState | null {
+  const dims = splitDimensions(breakdown, thenBy);
+  if (dims.length === 0) return null;
+  const parts = decodeChartKey(key);
+  if (parts.length !== dims.length) {
+    if (breakdown !== 'none' && parts.length === 1) {
+      return { [breakdown]: [parts[0]] };
+    }
+    return null;
+  }
+  const filters: FilterState = {};
+  dims.forEach((dim, i) => {
+    filters[dim] = [parts[i]];
+  });
+  return filters;
 }
 
 /**
@@ -38,8 +73,7 @@ export function studentMatchesChartKey(
     return gradeBandOf(row) === key;
   }
 
-  const dims: Dimension[] =
-    breakdown === 'none' ? [] : [breakdown, ...thenBy.filter((d) => d !== breakdown)];
+  const dims = splitDimensions(breakdown, thenBy);
   if (dims.length > 0) {
     const parts = decodeChartKey(key);
     if (parts.length === dims.length) {

@@ -52,7 +52,7 @@ export function PresetsPanel() {
           title: preset.label,
           metric: preset.metric,
           chartType: def.defaultChart,
-          size: 'M',
+          size: 'L',
           compareTo: 'median',
           breakdown: 'none',
           filters: {},

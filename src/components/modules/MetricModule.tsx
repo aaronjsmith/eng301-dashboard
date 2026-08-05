@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import type { ChartType, CompareTo, Dimension, ModuleConfig, SizeTier } from '../../types';
+import type { ChartType, CompareTo, Dimension, FilterState, ModuleConfig, SizeTier } from '../../types';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { useModuleChartData } from '../../hooks/useMetrics';
 import { useRole } from '../../context/RoleContext';
@@ -12,7 +12,8 @@ import {
   effectiveChartType,
   MAX_BREAKDOWN_DEPTH,
 } from '../../metrics/availability';
-import { activeFilterCount, DIMENSION_META } from '../../metrics/scope';
+import { activeFilterCount, DIMENSION_META, selectRows } from '../../metrics/scope';
+import { filtersFromChartKey } from '../../metrics/chartSelection';
 import { GLOSSARY } from '../../metrics/glossary';
 import { Chart } from '../charts/Chart';
 import { FilterPopup } from '../filters/FilterPopup';
@@ -126,11 +127,45 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
   const isInvestigate = config.investigate !== undefined;
   const tableOpen = Boolean(solo) || Boolean(config.showTable) || drillKey !== null;
 
+  const drillFilters = useMemo(
+    () =>
+      drillKey
+        ? filtersFromChartKey(drillKey, sanitized.breakdown, sanitized.thenBy)
+        : null,
+    [drillKey, sanitized.breakdown, sanitized.thenBy],
+  );
+  const drillLabel =
+    (drillKey && data.points.find((p) => p.key === drillKey)?.label) ||
+    (drillKey && data.slices?.find((p) => p.key === drillKey)?.label) ||
+    drillKey;
+  const drillPopulation = useMemo(() => {
+    if (!drillFilters) return [];
+    return selectRows(scopeRows, sanitized.filters, drillFilters);
+  }, [scopeRows, sanitized.filters, drillFilters]);
+  const drillSplitOptions = useMemo(() => {
+    if (!drillFilters) return [] as Dimension[];
+    const pinned = new Set(Object.keys(drillFilters) as Dimension[]);
+    return availableBreakdowns(config.metric, role, drillPopulation).filter(
+      (d): d is Dimension => d !== 'none' && !pinned.has(d),
+    );
+  }, [drillFilters, drillPopulation, config.metric, role]);
+
   const selectPoint = (key: string | null) => {
     setDrillKey(key);
     if (key && !config.showTable && !solo) {
       patch({ showTable: true });
     }
+  };
+
+  /** Pin the clicked mark as filters, then split that group by a new dimension. */
+  const splitSelectionBy = (dim: Dimension) => {
+    if (!drillFilters) return;
+    const filters: FilterState = { ...sanitized.filters };
+    for (const [d, vals] of Object.entries(drillFilters) as [Dimension, string[]][]) {
+      filters[d] = vals;
+    }
+    setDrillKey(null);
+    patch({ filters, breakdown: dim, thenBy: undefined });
   };
 
   return (
@@ -316,6 +351,52 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
           />
         )}
       </div>
+
+      {!isInvestigate && drillKey && (
+        <div className={styles.drillBar} role="region" aria-label="Selected chart group">
+          <div className={styles.drillFocus}>
+            <span className={styles.drillLabel}>
+              Selected: <strong>{drillLabel}</strong>
+            </span>
+            <button
+              type="button"
+              className={styles.drillClear}
+              onClick={() => setDrillKey(null)}
+            >
+              Clear
+            </button>
+          </div>
+          {drillFilters && drillSplitOptions.length > 0 ? (
+            <label className={styles.control}>
+              <span className={styles.controlLabel}>Split this group by</span>
+              <select
+                className={styles.select}
+                value=""
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v) splitSelectionBy(v as Dimension);
+                }}
+                aria-label="Split the selected chart group by another dimension"
+              >
+                <option value="" disabled>
+                  Choose a dimension…
+                </option>
+                {drillSplitOptions.map((d) => (
+                  <option key={d} value={d}>
+                    {DIMENSION_META[d].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <p className={styles.drillHint}>
+              {drillFilters
+                ? 'No further dimension splits this group — the list below is filtered to it.'
+                : 'The list below is filtered to this mark. Split by a dimension first to drill into groups.'}
+            </p>
+          )}
+        </div>
+      )}
 
       {!isInvestigate && (
         <div className={styles.tableRow}>

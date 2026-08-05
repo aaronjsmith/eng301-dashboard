@@ -176,7 +176,7 @@ export function BarChart({ data, size, selectedKey = null, onSelect }: BarChartP
                         show(e, [
                           `${p.label}: ${p.formatted}`,
                           studentsLabel(p.n),
-                          onSelect ? 'Click to show in list' : '',
+                          onSelect ? 'Click to select · then split this group' : '',
                         ].filter(Boolean))
                     : undefined
                 }

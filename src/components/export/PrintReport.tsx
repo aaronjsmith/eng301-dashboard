@@ -27,7 +27,7 @@ const BREACH_CHARTS: Record<string, Omit<ModuleConfig, 'id' | 'title'>> = {
   R1: {
     metric: 'genderGap',
     chartType: 'divergingBar',
-    size: 'M',
+    size: 'L',
     compareTo: 'median',
     breakdown: 'professor',
     filters: {},
@@ -35,7 +35,7 @@ const BREACH_CHARTS: Record<string, Omit<ModuleConfig, 'id' | 'title'>> = {
   R4: {
     metric: 'passRate',
     chartType: 'bars',
-    size: 'M',
+    size: 'L',
     compareTo: 'median',
     breakdown: 'firstGen',
     filters: {},
@@ -43,7 +43,7 @@ const BREACH_CHARTS: Record<string, Omit<ModuleConfig, 'id' | 'title'>> = {
   K5: {
     metric: 'passRate',
     chartType: 'bars',
-    size: 'M',
+    size: 'L',
     compareTo: 'median',
     breakdown: 'intensity',
     filters: {},
@@ -51,7 +51,7 @@ const BREACH_CHARTS: Record<string, Omit<ModuleConfig, 'id' | 'title'>> = {
   K4: {
     metric: 'passRate',
     chartType: 'bars',
-    size: 'M',
+    size: 'L',
     compareTo: 'median',
     breakdown: 'session',
     filters: {},
@@ -70,7 +70,7 @@ function BreachBlock({ highlight }: { highlight: HighlightItem }) {
             title: highlight.label,
             metric: highlight.investigate?.metric ?? 'passRate',
             chartType: 'bars',
-            size: 'M',
+            size: 'L',
             compareTo: 'median',
             breakdown: 'none',
             filters: highlight.investigate?.slice ?? {},
