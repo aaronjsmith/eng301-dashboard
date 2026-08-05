@@ -32,7 +32,7 @@ export function AlertsPanel() {
         metric: h.investigate.metric,
         chartType: metricDef(h.investigate.metric).defaultChart,
         size: 'L',
-        compareTo: 'none',
+        compareTo: 'median',
         breakdown: 'none',
         filters: {},
         investigate: h.investigate,

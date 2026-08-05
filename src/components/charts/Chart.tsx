@@ -12,6 +12,8 @@ interface ChartProps {
   type: ChartType;
   size: SizeTier;
   data: ChartData;
+  selectedKey?: string | null;
+  onSelect?: (key: string | null) => void;
 }
 
 /**
@@ -19,7 +21,7 @@ interface ChartProps {
  * zoom: each type renders more marks/labels per tier, never scaled-up ones.
  * The hero number leads every form.
  */
-export function Chart({ type, size, data }: ChartProps) {
+export function Chart({ type, size, data, selectedKey = null, onSelect }: ChartProps) {
   if (data.n === 0) {
     return <div className={styles.empty}>No students in the current scope</div>;
   }
@@ -53,7 +55,14 @@ export function Chart({ type, size, data }: ChartProps) {
   const mark = (() => {
     switch (type) {
       case 'bars':
-        return <BarChart data={data} size={size} />;
+        return (
+          <BarChart
+            data={data}
+            size={size}
+            selectedKey={selectedKey}
+            onSelect={onSelect}
+          />
+        );
       case 'pie':
         return <PieChart data={data} size={size} />;
       case 'area':

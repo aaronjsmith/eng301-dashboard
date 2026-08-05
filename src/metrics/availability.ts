@@ -56,13 +56,14 @@ export function availableChartTypes(
  * Comparison baselines that make sense for a metric. Population-average
  * baselines are meaningless for counts — a scoped count vs a bigger
  * population's count is a size difference, not a comparison; only
- * like-for-like trend windows compare honestly.
+ * like-for-like trend windows compare honestly. Median is always offered
+ * (series median when split; otherwise population median / overall).
  */
 export function availableCompareTos(metric: MetricId): CompareTo[] {
   if (metricDef(metric).unit === 'count') {
-    return ['none', 'priorSession', 'sameTermLastYear'];
+    return ['median', 'none', 'priorSession', 'sameTermLastYear'];
   }
-  return ['none', 'priorSession', 'sameTermLastYear', 'courseAvg'];
+  return ['median', 'none', 'priorSession', 'sameTermLastYear', 'courseAvg'];
 }
 
 /** True when a dimension splits the population into at least two groups. */
@@ -141,7 +142,8 @@ export function sanitizeConfigForRole(
   // A baseline the metric no longer offers (count metrics dropped the
   // population averages) self-heals instead of rendering a bogus scale.
   if (!availableCompareTos(next.metric).includes(next.compareTo)) {
-    next = { ...next, compareTo: 'none' };
+    const opts = availableCompareTos(next.metric);
+    next = { ...next, compareTo: opts.includes('median') ? 'median' : opts[0] };
   }
 
   return next;

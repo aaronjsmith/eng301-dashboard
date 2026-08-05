@@ -139,10 +139,20 @@ function yearsIn(population: StudentRow[]): number[] {
   return [...new Set(population.map((r) => r.year))].sort((a, b) => a - b);
 }
 
+function medianOf(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+}
+
 function computeBaseline(
   config: ModuleConfig,
   population: StudentRow[],
   ctx: ChartDataContext,
+  series: SeriesPoint[] = [],
 ): ChartData['baseline'] {
   const def = metricDef(config.metric);
   const fmt = (value: number, label: string) => ({
@@ -159,6 +169,22 @@ function computeBaseline(
   switch (config.compareTo) {
     case 'none':
       return undefined;
+    case 'median': {
+      const fromSeries = series
+        .filter((p) => !p.suppressed && p.value !== null)
+        .map((p) => p.value as number);
+      if (fromSeries.length >= 2) {
+        const m = medianOf(fromSeries);
+        return m !== null ? fmt(m, 'Median value') : undefined;
+      }
+      if (def.unit === 'score') {
+        const m = medianOf(population.map((r) => r.score));
+        return m !== null ? fmt(m, 'Median value') : undefined;
+      }
+      // Single aggregate mark — overall metric is the only reference available.
+      const value = def.compute(population);
+      return value !== null ? fmt(value, 'Median value') : undefined;
+    }
     case 'courseAvg': {
       const courses = new Set(population.map((r) => r.course));
       const rows = ctx.baselineRows.filter((r) => courses.has(r.course));
@@ -387,7 +413,7 @@ export function buildChartData(config: ModuleConfig, ctx: ChartDataContext): Cha
     points,
     slices,
     stacks,
-    baseline: computeBaseline(config, population, ctx),
+    baseline: computeBaseline(config, population, ctx, points),
     threshold: def.gapThreshold,
     matrix,
     status: heroSuppressed ? 'ok' : statusFor(config.metric, heroValue),

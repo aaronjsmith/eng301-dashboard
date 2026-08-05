@@ -44,7 +44,7 @@ export function InvestigateView({ config, onPromote }: InvestigateViewProps) {
       filters: mergedFilters,
       breakdown: dim,
       chartType: types[0],
-      compareTo: 'courseAvg',
+      compareTo: 'median',
       investigate: undefined,
     });
   };

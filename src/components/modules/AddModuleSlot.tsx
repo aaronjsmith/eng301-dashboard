@@ -53,7 +53,7 @@ export function AddModuleSlot({ solo }: { solo?: boolean }) {
         metric: 'passRate',
         chartType: 'bars',
         size: 'M',
-        compareTo: 'none',
+        compareTo: 'median',
         breakdown: 'none',
         filters: {},
       },

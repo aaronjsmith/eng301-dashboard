@@ -23,8 +23,8 @@ export const MARK = {
   radius: 4, // rounded data-end
 } as const;
 
-/** Bar thickness cap per tier — wider cards earn thicker bars (dataviz mark spec). */
-export const BAR_MAX: Record<SizeTier, number> = { S: 24, M: 40, L: 52 };
+/** Bar thickness cap per tier — horizontal pills; wider cards earn thicker bars. */
+export const BAR_MAX: Record<SizeTier, number> = { S: 14, M: 28, L: 36 };
 
 export interface MeasuredSize {
   width: number;

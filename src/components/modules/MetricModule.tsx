@@ -1,4 +1,4 @@
-import { useMemo, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ChartType, CompareTo, Dimension, ModuleConfig, SizeTier } from '../../types';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { useModuleChartData } from '../../hooks/useMetrics';
@@ -33,6 +33,7 @@ const SIZES: SizeTier[] = ['S', 'M', 'L'];
 
 const COMPARE_LABEL: Record<CompareTo, string> = {
   none: 'Nothing',
+  median: 'Median value',
   priorSession: 'Previous term',
   sameTermLastYear: 'Same term last year',
   courseAvg: 'Course average',
@@ -59,10 +60,15 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
   const { scopeRows } = useDashboardScope();
   const { data, sanitized } = useModuleChartData(config);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [drillKey, setDrillKey] = useState<string | null>(null);
 
   const def = metricDef(config.metric);
   const patch = (p: Partial<ModuleConfig>) =>
     dispatch({ type: 'update-module', id: config.id, patch: p });
+
+  useEffect(() => {
+    setDrillKey(null);
+  }, [config.metric, config.breakdown, config.filters, config.id]);
 
   const courseCount = useMemo(
     () => new Set(scopeRows.map((r) => r.course)).size,
@@ -74,7 +80,14 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
   const filterCount = activeFilterCount(sanitized.filters);
   const size = config.investigate ? 'L' : config.size;
   const isInvestigate = config.investigate !== undefined;
-  const tableOpen = Boolean(solo) || Boolean(config.showTable);
+  const tableOpen = Boolean(solo) || Boolean(config.showTable) || drillKey !== null;
+
+  const selectPoint = (key: string | null) => {
+    setDrillKey(key);
+    if (key && !config.showTable && !solo) {
+      patch({ showTable: true });
+    }
+  };
 
   return (
     <article
@@ -242,7 +255,13 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
         {isInvestigate ? (
           <InvestigateView config={config} onPromote={patch} />
         ) : (
-          <Chart type={chartType} size={size} data={data} />
+          <Chart
+            type={chartType}
+            size={size}
+            data={data}
+            selectedKey={drillKey}
+            onSelect={selectPoint}
+          />
         )}
       </div>
 
@@ -252,11 +271,23 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
             type="button"
             className={styles.tableToggle}
             aria-expanded={tableOpen}
-            onClick={() => patch({ showTable: !tableOpen })}
+            onClick={() => {
+              if (tableOpen) setDrillKey(null);
+              patch({ showTable: !tableOpen });
+            }}
           >
             {tableOpen ? 'Hide student list' : 'Show student list'}
           </button>
-          {tableOpen && <DataTable data={data} expanded={solo} />}
+          {tableOpen && (
+            <DataTable
+              data={data}
+              expanded={solo}
+              selectedKey={drillKey}
+              metric={config.metric}
+              breakdown={sanitized.breakdown}
+              onClearSelection={() => setDrillKey(null)}
+            />
+          )}
         </div>
       )}
 

@@ -53,7 +53,7 @@ export function PresetsPanel() {
           metric: preset.metric,
           chartType: def.defaultChart,
           size: 'M',
-          compareTo: 'none',
+          compareTo: 'median',
           breakdown: 'none',
           filters: {},
           showTable: true,

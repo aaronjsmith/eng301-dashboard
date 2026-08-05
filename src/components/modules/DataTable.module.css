@@ -19,6 +19,21 @@
   flex-shrink: 0;
 }
 
+.clear {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent-module);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.clear:hover {
+  color: var(--text-primary);
+}
+
 .scroller {
   max-height: 190px;
   overflow: auto;

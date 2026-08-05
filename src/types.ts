@@ -129,7 +129,8 @@ export type CompareTo =
   | 'none'
   | 'priorSession'
   | 'sameTermLastYear'
-  | 'courseAvg';
+  | 'courseAvg'
+  | 'median';
 
 /** Lagging/leading is a property of the metric (registry), rendered as a badge. */
 export type IndicatorKind = 'lagging' | 'leading';
