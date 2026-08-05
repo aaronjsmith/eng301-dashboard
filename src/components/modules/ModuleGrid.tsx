@@ -100,6 +100,8 @@ export function ModuleGrid() {
   };
 
   // Layout is a pure function of (modules, cols, dragged card, target cell).
+  // A lone chart card spans the full row width so focus-from-key-numbers
+  // fills the page; the Add slot drops onto the next row.
   const slots = useMemo(() => {
     const dragging = magnetic && drag !== null && previewCell !== null;
     const items = dragging
@@ -107,12 +109,26 @@ export function ModuleGrid() {
           it.id === drag.id ? { ...it, slot: previewCell } : it,
         )
       : layoutItems;
-    return resolve(items, cols, {
+    const resolved = resolve(items, cols, {
       trailingId: ADD_SLOT_ID,
       ...(dragging ? { priorityId: drag.id, keepPriorityInPlace: true } : {}),
     });
+
+    if (visible.length === 1) {
+      const id = visible[0].id;
+      const card = resolved.get(id);
+      if (card) {
+        resolved.set(id, { ...card, col: 0, w: cols });
+        const add = resolved.get(ADD_SLOT_ID);
+        if (add) {
+          resolved.set(ADD_SLOT_ID, { ...add, col: 0, row: card.h });
+        }
+      }
+    }
+
+    return resolved;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layoutItems, cols, magnetic, drag, previewCell]);
+  }, [layoutItems, cols, magnetic, drag, previewCell, visible.length]);
 
   // FLIP: displaced neighbors animate to their would-be slots (transform only).
   useLayoutEffect(() => {
