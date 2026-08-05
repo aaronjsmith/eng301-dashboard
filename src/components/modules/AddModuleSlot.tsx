@@ -7,7 +7,6 @@ import { flashCard } from './flash';
 import styles from './AddModuleSlot.module.css';
 
 const CHART_LABEL: Record<ChartType, string> = {
-  donut: 'donut',
   bars: 'bars',
   pie: 'pie',
   area: 'area',
@@ -52,7 +51,7 @@ export function AddModuleSlot() {
         id: freshId('mod'),
         title: 'New chart',
         metric: 'passRate',
-        chartType: 'donut',
+        chartType: 'bars',
         size: 'M',
         compareTo: 'none',
         breakdown: 'none',

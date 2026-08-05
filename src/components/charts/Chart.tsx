@@ -1,7 +1,6 @@
 import type { ChartType, SizeTier } from '../../types';
 import type { ChartData } from '../../metrics/chartData';
 import { BarChart } from './BarChart';
-import { DonutChart } from './DonutChart';
 import { PieChart } from './PieChart';
 import { AreaChart } from './AreaChart';
 import { HeatmapChart } from './HeatmapChart';
@@ -18,14 +17,14 @@ interface ChartProps {
 /**
  * THE chart entry point — one API for every module chart. Size is semantic
  * zoom: each type renders more marks/labels per tier, never scaled-up ones.
- * The hero number leads every form except the donut (which embeds it).
+ * The hero number leads every form.
  */
 export function Chart({ type, size, data }: ChartProps) {
   if (data.n === 0) {
     return <div className={styles.empty}>No students in the current scope</div>;
   }
 
-  const heroRow = type !== 'donut' && (
+  const heroRow = (
     <div className={styles.heroRow}>
       <span className={`${styles.hero} ${size !== 'S' ? styles.heroM : ''}`}>
         {data.hero.formatted}
@@ -53,8 +52,6 @@ export function Chart({ type, size, data }: ChartProps) {
 
   const mark = (() => {
     switch (type) {
-      case 'donut':
-        return <DonutChart data={data} size={size} />;
       case 'bars':
         return <BarChart data={data} size={size} />;
       case 'pie':
@@ -71,13 +68,9 @@ export function Chart({ type, size, data }: ChartProps) {
   return (
     <div className={styles.frame}>
       {heroRow}
-      {type !== 'donut' && size === 'S' && (
-        <p className={styles.heroSub}>{data.hero.sub}</p>
-      )}
+      {size === 'S' && <p className={styles.heroSub}>{data.hero.sub}</p>}
       <div className={styles.markArea}>{mark}</div>
-      {type !== 'donut' && size !== 'S' && (
-        <p className={styles.heroSub}>{data.hero.sub}</p>
-      )}
+      {size !== 'S' && <p className={styles.heroSub}>{data.hero.sub}</p>}
       {data.flagCounts && (
         <p className={styles.flagLegend} aria-label="Failing and marginal counts">
           <span className={styles.flagFail}>{data.flagCounts.fail} failing</span>

@@ -77,7 +77,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     format: percent1,
     target: { value: THRESHOLDS.passRateTarget, label: '≥ 85%', direction: 'atLeast' },
     allowedBreakdowns: EVERY_DIM,
-    defaultChart: 'donut',
+    defaultChart: 'bars',
     higherIsBetter: true,
   },
   dfwRate: {

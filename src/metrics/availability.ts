@@ -21,8 +21,6 @@ export interface AvailabilityInfo {
   courseCount: number;
 }
 
-const RATE_METRICS = new Set(['passRate', 'dfwRate', 'midBandShare']);
-
 export function availableChartTypes(
   config: Pick<ModuleConfig, 'metric' | 'breakdown'>,
   info: AvailabilityInfo,
@@ -40,12 +38,8 @@ export function availableChartTypes(
     return types;
   }
 
-  const types: ChartType[] = [];
-  if (breakdown === 'none') {
-    if (RATE_METRICS.has(config.metric)) types.push('donut');
-    types.push('bars');
-  } else {
-    types.push('bars');
+  const types: ChartType[] = ['bars'];
+  if (breakdown !== 'none') {
     if (breakdown === 'session' || breakdown === 'year') types.push('area'); // ordered axis
     if (
       config.metric === 'passRate' &&

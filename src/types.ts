@@ -116,7 +116,6 @@ export type MetricId =
   | 'atRisk';
 
 export type ChartType =
-  | 'donut'
   | 'bars'
   | 'pie'
   | 'area'

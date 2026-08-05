@@ -89,7 +89,7 @@ function BreachBlock({ highlight }: { highlight: HighlightItem }) {
       <p className={styles.breachEvidence}>{highlight.evidence}</p>
       <div className={styles.breachChart}>
         <Chart
-          type={sanitized.breakdown === 'none' ? 'donut' : config.chartType}
+          type={sanitized.breakdown === 'none' ? 'bars' : config.chartType}
           size="M"
           data={data}
         />

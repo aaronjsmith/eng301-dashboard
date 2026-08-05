@@ -37,7 +37,6 @@ const COMPARE_LABEL: Record<CompareTo, string> = {
 };
 
 const CHART_LABEL: Record<ChartType, string> = {
-  donut: 'Donut',
   bars: 'Bars',
   pie: 'Pie',
   area: 'Area',
