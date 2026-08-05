@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Dimension, FlagLevel, MetricId, StudentRow } from '../../types';
 import type { ChartData, SeriesPoint } from '../../metrics/chartData';
 import { useRole } from '../../context/RoleContext';
@@ -42,6 +42,9 @@ type AggregateCol = 'label' | 'value' | 'n';
 
 type SortDir = 'asc' | 'desc';
 
+/** Selected values for a column; undefined = no filter (show all). */
+type ColFilterMap<K extends string> = Partial<Record<K, string[]>>;
+
 function compareValues(a: string | number, b: string | number, dir: SortDir): number {
   const cmp =
     typeof a === 'number' && typeof b === 'number'
@@ -50,32 +53,243 @@ function compareValues(a: string | number, b: string | number, dir: SortDir): nu
   return dir === 'asc' ? cmp : -cmp;
 }
 
-function SortTh<K extends string>({
+function uniqueSorted(values: string[]): string[] {
+  return [...new Set(values)].sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }),
+  );
+}
+
+function facultyCellValue(
+  row: StudentRow,
+  flag: FlagLevel | undefined,
+  col: FacultyCol,
+): string {
+  if (col === 'flag') return flag ? FLAG_LABEL[flag] : '(none)';
+  return String(row[col]);
+}
+
+function aggCellValue(p: SeriesPoint, col: AggregateCol): string {
+  if (col === 'label') return p.label;
+  if (col === 'value') return p.formatted;
+  return p.suppressed ? 'Fewer than 20' : String(p.n);
+}
+
+function passesColFilters<K extends string>(
+  filters: ColFilterMap<K>,
+  valueOf: (col: K) => string,
+): boolean {
+  for (const col of Object.keys(filters) as K[]) {
+    const allowed = filters[col];
+    if (!allowed) continue;
+    if (!allowed.includes(valueOf(col))) return false;
+  }
+  return true;
+}
+
+function activeFilterCount<K extends string>(filters: ColFilterMap<K>): number {
+  return (Object.keys(filters) as K[]).filter((k) => filters[k] !== undefined).length;
+}
+
+/** Drop filter values that no longer exist in the current option set. */
+function pruneFilters<K extends string>(
+  filters: ColFilterMap<K>,
+  options: Record<K, string[]>,
+): ColFilterMap<K> {
+  let changed = false;
+  const next: ColFilterMap<K> = {};
+  for (const col of Object.keys(filters) as K[]) {
+    const selected = filters[col];
+    if (selected === undefined) continue;
+    const allowed = new Set(options[col] ?? []);
+    const kept = selected.filter((v) => allowed.has(v));
+    if (kept.length === (options[col] ?? []).length) {
+      // Equivalent to "all" — clear the filter.
+      changed = true;
+      continue;
+    }
+    if (kept.length !== selected.length) changed = true;
+    next[col] = kept;
+  }
+  return changed || Object.keys(next).length !== Object.keys(filters).length
+    ? next
+    : filters;
+}
+
+function ColumnMenu<K extends string>({
   col,
   label,
   sortKey,
   sortDir,
   onSort,
+  options,
+  selected,
+  onChange,
 }: {
   col: K;
   label: string;
   sortKey: K;
   sortDir: SortDir;
   onSort: (col: K) => void;
+  options: string[];
+  selected: string[] | undefined;
+  onChange: (col: K, next: string[] | undefined) => void;
 }) {
-  const active = sortKey === col;
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const wrapRef = useRef<HTMLTableCellElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const sortedActive = sortKey === col;
+  const filterActive = selected !== undefined;
+
+  useEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const rect = btnRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const width = 200;
+      const left = Math.min(rect.left, window.innerWidth - width - 8);
+      setMenuPos({ top: rect.bottom + 4, left: Math.max(8, left) });
+    };
+    place();
+    const onPointerDown = (e: PointerEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) {
+        const menu = document.getElementById(`col-filter-${String(col)}`);
+        if (menu && menu.contains(e.target as Node)) return;
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open, col]);
+
+  useEffect(() => {
+    if (!open) setQuery('');
+  }, [open]);
+
+  const visible = query.trim()
+    ? options.filter((o) => o.toLowerCase().includes(query.trim().toLowerCase()))
+    : options;
+
+  const checked = (value: string) => selected === undefined || selected.includes(value);
+
+  const toggle = (value: string) => {
+    const current = selected ?? [...options];
+    const next = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    if (next.length === options.length) onChange(col, undefined);
+    else onChange(col, next);
+  };
+
   return (
-    <th aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-      <button
-        type="button"
-        className={active ? styles.sortBtnActive : styles.sortBtn}
-        onClick={() => onSort(col)}
-      >
-        {label}
-        <span className={styles.sortMark} aria-hidden="true">
-          {active ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ' ↕'}
-        </span>
-      </button>
+    <th
+      ref={wrapRef}
+      className={styles.th}
+      aria-sort={sortedActive ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+    >
+      <div className={styles.thInner}>
+        <button
+          type="button"
+          className={sortedActive ? styles.sortBtnActive : styles.sortBtn}
+          onClick={() => onSort(col)}
+        >
+          {label}
+          <span className={styles.sortMark} aria-hidden="true">
+            {sortedActive ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ' ↕'}
+          </span>
+        </button>
+        <button
+          ref={btnRef}
+          type="button"
+          className={filterActive ? styles.filterBtnActive : styles.filterBtn}
+          aria-expanded={open}
+          aria-label={`Filter ${label}`}
+          title={`Filter ${label}`}
+          onClick={() => {
+            if (open) {
+              setOpen(false);
+              return;
+            }
+            const rect = btnRef.current?.getBoundingClientRect();
+            if (rect) {
+              const width = 200;
+              const left = Math.min(rect.left, window.innerWidth - width - 8);
+              setMenuPos({ top: rect.bottom + 4, left: Math.max(8, left) });
+            }
+            setOpen(true);
+          }}
+        >
+          <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true">
+            <path
+              d="M1.5 2h9L7 6.6V10l-2-1V6.6L1.5 2Z"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+      {open && menuPos && (
+        <div
+          id={`col-filter-${String(col)}`}
+          className={styles.filterMenu}
+          role="dialog"
+          aria-label={`Filter ${label}`}
+          style={{ top: menuPos.top, left: menuPos.left }}
+        >
+          {options.length > 8 && (
+            <input
+              className={styles.filterSearch}
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search…"
+              aria-label={`Search ${label} values`}
+            />
+          )}
+          <div className={styles.filterActions}>
+            <button
+              type="button"
+              onClick={() => onChange(col, undefined)}
+              disabled={selected === undefined}
+            >
+              All
+            </button>
+            <button type="button" onClick={() => onChange(col, [])}>
+              None
+            </button>
+          </div>
+          <div className={styles.filterList}>
+            {visible.length === 0 ? (
+              <p className={styles.filterEmpty}>No matches</p>
+            ) : (
+              visible.map((value) => (
+                <label key={value} className={styles.filterOption}>
+                  <input
+                    type="checkbox"
+                    checked={checked(value)}
+                    onChange={() => toggle(value)}
+                  />
+                  <span>{value}</span>
+                </label>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </th>
   );
 }
@@ -85,7 +299,7 @@ function SortTh<K extends string>({
  * the named list with flag conditional formatting; chair/admin views are
  * anonymous by construction — aggregates only, `Student #` never rendered.
  * Clicking a chart mark filters this list to the students/groups in that mark.
- * Column headers sort ascending/descending.
+ * Column headers sort and filter independently of the module Filter control.
  */
 export function DataTable({
   data,
@@ -107,6 +321,8 @@ export function DataTable({
     key: 'value',
     dir: 'desc',
   });
+  const [facultyFilters, setFacultyFilters] = useState<ColFilterMap<FacultyCol>>({});
+  const [aggFilters, setAggFilters] = useState<ColFilterMap<AggregateCol>>({});
 
   const toggleFaculty = (key: FacultyCol) => {
     setFacultySort((prev) =>
@@ -124,13 +340,61 @@ export function DataTable({
     );
   };
 
-  const facultyRows = useMemo(() => {
+  const setFacultyFilter = (col: FacultyCol, next: string[] | undefined) => {
+    setFacultyFilters((prev) => {
+      const copy = { ...prev };
+      if (next === undefined) delete copy[col];
+      else copy[col] = next;
+      return copy;
+    });
+  };
+
+  const setAggFilter = (col: AggregateCol, next: string[] | undefined) => {
+    setAggFilters((prev) => {
+      const copy = { ...prev };
+      if (next === undefined) delete copy[col];
+      else copy[col] = next;
+      return copy;
+    });
+  };
+
+  // Chart-mark selection first — column filter options come from that slice.
+  const facultyBase = useMemo(() => {
     if (!data.tableRows) return [];
-    const filtered = selectedKey
+    return selectedKey
       ? data.tableRows.filter(({ row, flag }) =>
           studentMatchesChartKey(row, flag, selectedKey, metric, breakdown, thenBy),
         )
       : data.tableRows;
+  }, [data.tableRows, selectedKey, metric, breakdown, thenBy]);
+
+  const facultyOptions = useMemo(() => {
+    const cols: FacultyCol[] = [
+      'studentNum',
+      'course',
+      'year',
+      'session',
+      'score',
+      'grade',
+      'flag',
+    ];
+    const map = {} as Record<FacultyCol, string[]>;
+    for (const col of cols) {
+      map[col] = uniqueSorted(
+        facultyBase.map(({ row, flag }) => facultyCellValue(row, flag, col)),
+      );
+    }
+    return map;
+  }, [facultyBase]);
+
+  useEffect(() => {
+    setFacultyFilters((prev) => pruneFilters(prev, facultyOptions));
+  }, [facultyOptions]);
+
+  const facultyRows = useMemo(() => {
+    const filtered = facultyBase.filter(({ row, flag }) =>
+      passesColFilters(facultyFilters, (col) => facultyCellValue(row, flag, col)),
+    );
 
     const { key, dir } = facultySort;
     return [...filtered].sort((a, b) => {
@@ -143,7 +407,7 @@ export function DataTable({
       const bv = b.row[key as keyof StudentRow];
       return compareValues(av as string | number, bv as string | number, dir);
     });
-  }, [data.tableRows, selectedKey, metric, breakdown, thenBy, facultySort]);
+  }, [facultyBase, facultyFilters, facultySort]);
 
   const allPoints: SeriesPoint[] = useMemo(() => {
     if (data.points.length > 0) return data.points;
@@ -161,17 +425,34 @@ export function DataTable({
     ];
   }, [data.points, data.slices, data.hero, data.n, data.status]);
 
+  const aggBase = useMemo(() => {
+    return selectedKey ? allPoints.filter((p) => p.key === selectedKey) : allPoints;
+  }, [allPoints, selectedKey]);
+
+  const aggOptions = useMemo(() => {
+    const cols: AggregateCol[] = ['label', 'value', 'n'];
+    const map = {} as Record<AggregateCol, string[]>;
+    for (const col of cols) {
+      map[col] = uniqueSorted(aggBase.map((p) => aggCellValue(p, col)));
+    }
+    return map;
+  }, [aggBase]);
+
+  useEffect(() => {
+    setAggFilters((prev) => pruneFilters(prev, aggOptions));
+  }, [aggOptions]);
+
   const aggRows = useMemo(() => {
-    const filtered = selectedKey
-      ? allPoints.filter((p) => p.key === selectedKey)
-      : allPoints;
+    const filtered = aggBase.filter((p) =>
+      passesColFilters(aggFilters, (col) => aggCellValue(p, col)),
+    );
     const { key, dir } = aggSort;
     return [...filtered].sort((a, b) => {
       if (key === 'label') return compareValues(a.label, b.label, dir);
       if (key === 'n') return compareValues(a.n, b.n, dir);
       return compareValues(a.value ?? -Infinity, b.value ?? -Infinity, dir);
     });
-  }, [allPoints, selectedKey, aggSort]);
+  }, [aggBase, aggFilters, aggSort]);
 
   if (isFacultyList) {
     const flagged = facultyRows.filter((r) => r.flag);
@@ -179,6 +460,7 @@ export function DataTable({
       data.points.find((p) => p.key === selectedKey)?.label ??
       data.slices?.find((p) => p.key === selectedKey)?.label ??
       selectedKey;
+    const colFilterN = activeFilterCount(facultyFilters);
 
     return (
       <div className={styles.wrap} data-expanded={expanded || undefined}>
@@ -186,6 +468,18 @@ export function DataTable({
           {selectedKey
             ? `${facultyRows.length} students in “${selectedLabel}”`
             : `${facultyRows.length} students in scope · ${flagged.length} flagged (🔴 failing · 🟡 marginal / risk-slice)`}
+          {colFilterN > 0 && (
+            <>
+              {' · '}
+              <button
+                type="button"
+                className={styles.clear}
+                onClick={() => setFacultyFilters({})}
+              >
+                Clear column filters ({colFilterN})
+              </button>
+            </>
+          )}
           {selectedKey && onClearSelection && (
             <>
               {' · '}
@@ -199,13 +493,29 @@ export function DataTable({
           <table className={styles.table}>
             <thead>
               <tr>
-                <SortTh col="studentNum" label="Student #" sortKey={facultySort.key} sortDir={facultySort.dir} onSort={toggleFaculty} />
-                <SortTh col="course" label="Course" sortKey={facultySort.key} sortDir={facultySort.dir} onSort={toggleFaculty} />
-                <SortTh col="year" label="Year" sortKey={facultySort.key} sortDir={facultySort.dir} onSort={toggleFaculty} />
-                <SortTh col="session" label="Session" sortKey={facultySort.key} sortDir={facultySort.dir} onSort={toggleFaculty} />
-                <SortTh col="score" label="Score" sortKey={facultySort.key} sortDir={facultySort.dir} onSort={toggleFaculty} />
-                <SortTh col="grade" label="Grade" sortKey={facultySort.key} sortDir={facultySort.dir} onSort={toggleFaculty} />
-                <SortTh col="flag" label="Flag" sortKey={facultySort.key} sortDir={facultySort.dir} onSort={toggleFaculty} />
+                {(
+                  [
+                    ['studentNum', 'Student #'],
+                    ['course', 'Course'],
+                    ['year', 'Year'],
+                    ['session', 'Session'],
+                    ['score', 'Score'],
+                    ['grade', 'Grade'],
+                    ['flag', 'Flag'],
+                  ] as const
+                ).map(([col, label]) => (
+                  <ColumnMenu
+                    key={col}
+                    col={col}
+                    label={label}
+                    sortKey={facultySort.key}
+                    sortDir={facultySort.dir}
+                    onSort={toggleFaculty}
+                    options={facultyOptions[col]}
+                    selected={facultyFilters[col]}
+                    onChange={setFacultyFilter}
+                  />
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -231,6 +541,7 @@ export function DataTable({
   }
 
   const selectedLabel = aggRows[0]?.label ?? selectedKey;
+  const colFilterN = activeFilterCount(aggFilters);
 
   return (
     <div className={styles.wrap} data-expanded={expanded || undefined}>
@@ -238,6 +549,14 @@ export function DataTable({
         {selectedKey
           ? `Showing “${selectedLabel}” only — student identifiers are removed at this access level`
           : 'Aggregates only — student identifiers are removed at this access level'}
+        {colFilterN > 0 && (
+          <>
+            {' · '}
+            <button type="button" className={styles.clear} onClick={() => setAggFilters({})}>
+              Clear column filters ({colFilterN})
+            </button>
+          </>
+        )}
         {selectedKey && onClearSelection && (
           <>
             {' · '}
@@ -251,9 +570,36 @@ export function DataTable({
         <table className={styles.table}>
           <thead>
             <tr>
-              <SortTh col="label" label="Group" sortKey={aggSort.key} sortDir={aggSort.dir} onSort={toggleAgg} />
-              <SortTh col="value" label={data.metricLabel} sortKey={aggSort.key} sortDir={aggSort.dir} onSort={toggleAgg} />
-              <SortTh col="n" label="Students" sortKey={aggSort.key} sortDir={aggSort.dir} onSort={toggleAgg} />
+              <ColumnMenu
+                col="label"
+                label="Group"
+                sortKey={aggSort.key}
+                sortDir={aggSort.dir}
+                onSort={toggleAgg}
+                options={aggOptions.label}
+                selected={aggFilters.label}
+                onChange={setAggFilter}
+              />
+              <ColumnMenu
+                col="value"
+                label={data.metricLabel}
+                sortKey={aggSort.key}
+                sortDir={aggSort.dir}
+                onSort={toggleAgg}
+                options={aggOptions.value}
+                selected={aggFilters.value}
+                onChange={setAggFilter}
+              />
+              <ColumnMenu
+                col="n"
+                label="Students"
+                sortKey={aggSort.key}
+                sortDir={aggSort.dir}
+                onSort={toggleAgg}
+                options={aggOptions.n}
+                selected={aggFilters.n}
+                onChange={setAggFilter}
+              />
             </tr>
           </thead>
           <tbody>

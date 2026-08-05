@@ -63,6 +63,18 @@
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
+  z-index: 1;
+}
+
+.th {
+  position: sticky;
+  top: 0;
+}
+
+.thInner {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
 }
 
 .sortBtn,
@@ -70,8 +82,9 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  width: 100%;
-  padding: 5px 9px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 4px 5px 9px;
   border: none;
   background: transparent;
   font: inherit;
@@ -94,6 +107,111 @@
 
 .sortBtnActive .sortMark {
   opacity: 1;
+}
+
+.filterBtn,
+.filterBtnActive {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  padding: 0;
+  border: none;
+  border-left: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.filterBtn:hover,
+.filterBtnActive {
+  color: var(--accent-module);
+  background: var(--accent-module-soft);
+}
+
+.filterBtnActive {
+  color: var(--accent-module);
+}
+
+.filterMenu {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 200px;
+  max-height: 240px;
+  padding: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+}
+
+.filterSearch {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-app);
+  font: inherit;
+  font-size: 11px;
+  color: var(--text-primary);
+}
+
+.filterActions {
+  display: flex;
+  gap: 8px;
+}
+
+.filterActions button {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent-module);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.filterActions button:disabled {
+  color: var(--text-muted);
+  cursor: default;
+  text-decoration: none;
+}
+
+.filterList {
+  overflow: auto;
+  max-height: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.filterOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 2px 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: normal;
+}
+
+.filterOption input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.filterEmpty {
+  margin: 4px 0;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .table td {
