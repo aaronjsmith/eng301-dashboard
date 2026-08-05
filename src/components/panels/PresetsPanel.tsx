@@ -17,9 +17,10 @@ const accent = {
 
 /**
  * Unique module: the predefined KPI/KRI presets (FR3) as a simple clickable
- * list — name + live value only. Clicking opens the preset as a card in the
- * grid; if a card for that metric already exists, it flashes instead of
- * duplicating. The full explanation (incl. target) lives in the hover tip.
+ * list — name + live value only. Clicking focuses that preset as the only
+ * card in the grid (hides every other card). If a card for that metric
+ * already exists, it is kept and the rest are cleared. The full explanation
+ * (incl. target) also lives in the hover tip.
  */
 export function PresetsPanel() {
   const { panel } = usePresets();
@@ -34,23 +35,26 @@ export function PresetsPanel() {
         (!m.visibleTo || m.visibleTo.includes(role)),
     );
     if (existing) {
-      flashCard(existing.id);
+      dispatch({ type: 'set-modules', modules: [existing] });
+      requestAnimationFrame(() => flashCard(existing.id));
       return;
     }
     const def = metricDef(preset.metric);
     const id = freshId('preset');
     dispatch({
-      type: 'add-module',
-      config: {
-        id,
-        title: preset.label,
-        metric: preset.metric,
-        chartType: def.defaultChart,
-        size: 'M',
-        compareTo: 'none',
-        breakdown: 'none',
-        filters: {},
-      },
+      type: 'set-modules',
+      modules: [
+        {
+          id,
+          title: preset.label,
+          metric: preset.metric,
+          chartType: def.defaultChart,
+          size: 'M',
+          compareTo: 'none',
+          breakdown: 'none',
+          filters: {},
+        },
+      ],
     });
     requestAnimationFrame(() => flashCard(id));
   };
@@ -59,7 +63,7 @@ export function PresetsPanel() {
     <section className={styles.panel} style={accent} aria-label="Key numbers">
       <p className={styles.kicker}>Start here</p>
       <h2 className={styles.title}>Key numbers</h2>
-      <p className={styles.caption}>Click one to open a chart about it</p>
+      <p className={styles.caption}>Click one to focus that chart alone</p>
       <ul className={styles.list}>
         {panel.map((preset) => (
           <li key={preset.id}>
@@ -67,7 +71,7 @@ export function PresetsPanel() {
               content={{
                 title: preset.label,
                 body: preset.description,
-                note: 'Click to open a chart',
+                note: 'Click to focus this chart alone',
               }}
             >
               <button

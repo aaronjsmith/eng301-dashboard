@@ -33,6 +33,7 @@ export type WorkspaceAction =
   | { type: 'update-module'; id: string; patch: Partial<ModuleConfig> }
   | { type: 'remove-module'; id: string }
   | { type: 'add-module'; config: ModuleConfig }
+  | { type: 'set-modules'; modules: ModuleConfig[] }
   | { type: 'add-bundle'; bundle: ModuleBundle }
   | { type: 'set-layout'; slots: Record<string, GridSlot> }
   | { type: 'set-free-offset'; id: string; offset: { dx: number; dy: number } | null }
@@ -55,6 +56,8 @@ function reducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState
       return { ...state, modules: state.modules.filter((m) => m.id !== action.id) };
     case 'add-module':
       return { ...state, modules: [...state.modules, action.config] };
+    case 'set-modules':
+      return { ...state, modules: action.modules };
     case 'add-bundle': {
       const added = action.bundle.modules.map((m) => ({ ...m, id: freshId(m.id) }));
       return { ...state, modules: [...state.modules, ...added] };

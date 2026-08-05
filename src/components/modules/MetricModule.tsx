@@ -117,6 +117,11 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
               <span className={styles.indicator}>Opportunities</span>
             </Tip>
           )}
+          <p className={styles.description}>
+            {config.title === def.label
+              ? def.description
+              : `${def.label} — ${def.description}`}
+          </p>
         </div>
         <div className={styles.headActions}>
           <div className={styles.filterWrap}>
