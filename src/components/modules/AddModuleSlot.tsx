@@ -20,7 +20,7 @@ const CHART_LABEL: Record<ChartType, string> = {
  * expands to its modules for one-at-a-time adds (menu stays open; the global
  * scope is untouched), with "Add all" appending the whole bundle.
  */
-export function AddModuleSlot() {
+export function AddModuleSlot({ solo }: { solo?: boolean }) {
   const { dispatch, bundles } = useWorkspace();
   const { role } = useRole();
   const [open, setOpen] = useState(false);
@@ -70,7 +70,7 @@ export function AddModuleSlot() {
   };
 
   return (
-    <div className={styles.root} ref={rootRef}>
+    <div className={styles.root} ref={rootRef} data-solo={solo || undefined}>
       <button
         type="button"
         className={styles.slot}

@@ -21,6 +21,13 @@
   transition: border-color 120ms ease, background 120ms ease;
 }
 
+.root[data-solo] .slot {
+  min-height: 72px;
+  flex-direction: row;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
 .slot:hover {
   border-color: var(--accent-module);
   background: var(--accent-module-soft);

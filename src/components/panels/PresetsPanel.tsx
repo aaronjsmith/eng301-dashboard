@@ -35,7 +35,10 @@ export function PresetsPanel() {
         (!m.visibleTo || m.visibleTo.includes(role)),
     );
     if (existing) {
-      dispatch({ type: 'set-modules', modules: [existing] });
+      dispatch({
+        type: 'set-modules',
+        modules: [{ ...existing, showTable: true }],
+      });
       requestAnimationFrame(() => flashCard(existing.id));
       return;
     }
@@ -53,6 +56,7 @@ export function PresetsPanel() {
           compareTo: 'none',
           breakdown: 'none',
           filters: {},
+          showTable: true,
         },
       ],
     });

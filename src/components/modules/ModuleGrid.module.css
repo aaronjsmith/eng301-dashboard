@@ -14,11 +14,31 @@
   gap: 18px;
   align-items: stretch;
   align-content: start;
+  min-width: 0;
+}
+
+/* One focused card: fill the main column height; Add slot sits below. */
+.grid[data-solo] {
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-auto-rows: unset;
+  align-content: stretch;
 }
 
 .cell {
   min-width: 0;
   position: relative;
+}
+
+.grid[data-solo] .cell[data-solo-card] {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.grid[data-solo] .cell:not([data-solo-card]) {
+  min-height: 0;
 }
 
 /* Target slot highlight while dragging (the card itself dims via data-dragging) */

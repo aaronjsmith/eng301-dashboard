@@ -269,6 +269,7 @@ export function ModuleGrid() {
 
   const dragged = drag ? visible.find((m) => m.id === drag.id) : undefined;
   const addSlot = slots.get(ADD_SLOT_ID);
+  const solo = visible.length === 1;
 
   return (
     <div
@@ -276,6 +277,7 @@ export function ModuleGrid() {
       ref={gridRef}
       style={{ ['--grid-cols' as string]: cols, ['--row-unit' as string]: `${ROW_UNIT}px` }}
       data-magnetic={magnetic}
+      data-solo={solo || undefined}
     >
       {visible.map((config) => {
         const slot = slots.get(config.id);
@@ -296,14 +298,20 @@ export function ModuleGrid() {
             className={styles.cell}
             data-target={drag?.id === config.id && magnetic ? true : undefined}
             data-parked={!magnetic && offset ? true : undefined}
+            data-solo-card={solo || undefined}
             style={{
-              gridColumn: slot ? `${slot.col + 1} / span ${slot.w}` : undefined,
-              gridRow: slot ? `${slot.row + 1} / span ${slot.h}` : undefined,
+              gridColumn: solo
+                ? '1 / -1'
+                : slot
+                  ? `${slot.col + 1} / span ${slot.w}`
+                  : undefined,
+              gridRow: solo ? '1' : slot ? `${slot.row + 1} / span ${slot.h}` : undefined,
               transform: offset ? `translate(${offset.dx}px, ${offset.dy}px)` : undefined,
             }}
           >
             <MetricModule
               config={config}
+              solo={solo}
               onDragStart={(e) => startDrag(e, config)}
               dragging={drag?.id === config.id && magnetic}
             />
@@ -314,11 +322,15 @@ export function ModuleGrid() {
       <div
         className={styles.cell}
         style={{
-          gridColumn: addSlot ? `${addSlot.col + 1} / span ${addSlot.w}` : undefined,
-          gridRow: addSlot ? `${addSlot.row + 1} / span ${addSlot.h}` : undefined,
+          gridColumn: solo
+            ? '1 / span 2'
+            : addSlot
+              ? `${addSlot.col + 1} / span ${addSlot.w}`
+              : undefined,
+          gridRow: solo ? '2' : addSlot ? `${addSlot.row + 1} / span ${addSlot.h}` : undefined,
         }}
       >
-        <AddModuleSlot />
+        <AddModuleSlot solo={solo} />
       </div>
 
       {drag && magnetic && dragged && (

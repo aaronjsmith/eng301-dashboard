@@ -5,6 +5,8 @@ import styles from './DataTable.module.css';
 
 interface DataTableProps {
   data: ChartData;
+  /** Solo focused card — grow the scroller to fill remaining height. */
+  expanded?: boolean;
 }
 
 const FLAG_LABEL: Record<FlagLevel, string> = {
@@ -18,13 +20,13 @@ const FLAG_LABEL: Record<FlagLevel, string> = {
  * the named list with flag conditional formatting; chair/admin views are
  * anonymous by construction — aggregates only, `Student #` never rendered.
  */
-export function DataTable({ data }: DataTableProps) {
+export function DataTable({ data, expanded }: DataTableProps) {
   const { role } = useRole();
 
   if (role === 'faculty' && data.tableRows) {
     const flagged = data.tableRows.filter((r) => r.flag);
     return (
-      <div className={styles.wrap}>
+      <div className={styles.wrap} data-expanded={expanded || undefined}>
         <p className={styles.caption}>
           {data.tableRows.length} students in scope · {flagged.length} flagged
           (🔴 failing · 🟡 marginal / risk-slice)
@@ -81,7 +83,7 @@ export function DataTable({ data }: DataTableProps) {
         ];
 
   return (
-    <div className={styles.wrap}>
+    <div className={styles.wrap} data-expanded={expanded || undefined}>
       <p className={styles.caption}>
         Aggregates only — student identifiers are removed at this access level
       </p>

@@ -23,6 +23,8 @@ import styles from './MetricModule.module.css';
 
 interface MetricModuleProps {
   config: ModuleConfig;
+  /** Lone card in the grid — fill height and keep the student list open. */
+  solo?: boolean;
   onDragStart?: (e: ReactPointerEvent<HTMLElement>) => void;
   dragging?: boolean;
 }
@@ -51,7 +53,7 @@ const CHART_LABEL: Record<ChartType, string> = {
  * toggle stays available at every size. Hidden controls stay active — a
  * filtered S-tile still shows filtered numbers (FR5).
  */
-export function MetricModule({ config, onDragStart, dragging }: MetricModuleProps) {
+export function MetricModule({ config, solo, onDragStart, dragging }: MetricModuleProps) {
   const { dispatch } = useWorkspace();
   const { role } = useRole();
   const { scopeRows } = useDashboardScope();
@@ -72,11 +74,13 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
   const filterCount = activeFilterCount(sanitized.filters);
   const size = config.investigate ? 'L' : config.size;
   const isInvestigate = config.investigate !== undefined;
+  const tableOpen = Boolean(solo) || Boolean(config.showTable);
 
   return (
     <article
       className={styles.card}
       data-size={size}
+      data-solo={solo || undefined}
       data-dragging={dragging || undefined}
       aria-label={config.title}
     >
@@ -247,12 +251,12 @@ export function MetricModule({ config, onDragStart, dragging }: MetricModuleProp
           <button
             type="button"
             className={styles.tableToggle}
-            aria-expanded={config.showTable ?? false}
-            onClick={() => patch({ showTable: !config.showTable })}
+            aria-expanded={tableOpen}
+            onClick={() => patch({ showTable: !tableOpen })}
           >
-            {config.showTable ? 'Hide student list' : 'Show student list'}
+            {tableOpen ? 'Hide student list' : 'Show student list'}
           </button>
-          {config.showTable && <DataTable data={data} />}
+          {tableOpen && <DataTable data={data} expanded={solo} />}
         </div>
       )}
 
