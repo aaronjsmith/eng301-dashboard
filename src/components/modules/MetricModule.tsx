@@ -94,6 +94,7 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
       className={styles.card}
       data-size={size}
       data-solo={solo || undefined}
+      data-table-open={tableOpen || undefined}
       data-dragging={dragging || undefined}
       aria-label={config.title}
     >

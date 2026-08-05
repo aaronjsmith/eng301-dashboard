@@ -17,14 +17,18 @@
   min-height: 0;
 }
 
+/* Keep the chart on screen when the student list expands — never let the
+   table steal all remaining height. */
 .card[data-solo] .chart {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
+  min-height: 200px;
   max-height: 42%;
+  overflow: hidden;
 }
 
 .card[data-solo] .tableRow {
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 120px;
   display: flex;
   flex-direction: column;
 }
@@ -268,11 +272,17 @@
 
 .chart {
   flex: 1;
-  min-height: 0;
+  min-height: 140px;
   /* Safety valve for fixed grid rows: scrolls instead of clipping the axis
      in degenerate cases only (L with the data table open, extreme category
      counts) — routine S/M/L regions now exceed every chart floor. */
   overflow-y: auto;
+}
+
+/* Student list open — keep a usable plot region above the table. */
+.card[data-table-open] .chart {
+  flex: 1 0 auto;
+  min-height: 180px;
 }
 
 .tableToggle {
