@@ -335,8 +335,48 @@ export function buildChartData(config: ModuleConfig, ctx: ChartDataContext): Cha
 
   let flagCounts: ChartData['flagCounts'];
   if (config.metric === 'passRate') {
-    const f = flagStudents(population).counts;
+    const flags = flagStudents(population);
+    const f = flags.counts;
     flagCounts = { fail: f.fail, marginal: f.marginal };
+
+    // No breakdown: show pass / failing / marginal as peer bars so the
+    // footer colors also appear in the chart (counts → % of cohort).
+    if (config.breakdown === 'none' && population.length > 0 && !heroSuppressed) {
+      const n = population.length;
+      const passPct = heroValue;
+      const failPct = (f.fail / n) * 100;
+      const margPct = (f.marginal / n) * 100;
+      const passed = passRate(population)?.passed ?? 0;
+      points = [
+        {
+          key: 'pass',
+          label: 'Pass rate',
+          value: passPct,
+          formatted: passPct !== null ? percent1(passPct) : '—',
+          n: passed,
+          suppressed: false,
+          status: 'ok',
+        },
+        {
+          key: 'fail',
+          label: 'Failing',
+          value: failPct,
+          formatted: percent1(failPct),
+          n: f.fail,
+          suppressed: false,
+          status: 'critical',
+        },
+        {
+          key: 'marginal',
+          label: 'Marginal',
+          value: margPct,
+          formatted: percent1(margPct),
+          n: f.marginal,
+          suppressed: false,
+          status: 'notable',
+        },
+      ];
+    }
   }
 
   const suppressedCells = points.filter((p) => p.suppressed).length;

@@ -94,6 +94,7 @@ export function BarChart({ data, size }: BarChartProps) {
               const barW = p.suppressed ? 0 : x(p.value ?? 0);
               const showValue =
                 size === 'L' ||
+                visible.length <= 3 ||
                 p.suppressed ||
                 p.value === Math.max(...values) ||
                 p.value === Math.min(...values);
@@ -233,7 +234,11 @@ export function BarChart({ data, size }: BarChartProps) {
             const barH = p.suppressed ? 0 : Math.max(topPad + plotH - y(p.value ?? 0), 2);
             const showValue =
               size !== 'S' &&
-              (size === 'L' || p.value === maxV || p.value === minV || p.suppressed);
+              (size === 'L' ||
+                visible.length <= 3 ||
+                p.value === maxV ||
+                p.value === minV ||
+                p.suppressed);
             return (
               <g
                 key={p.key}
