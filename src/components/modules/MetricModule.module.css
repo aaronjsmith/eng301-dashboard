@@ -21,20 +21,20 @@
    table steal all remaining height. */
 .card[data-solo] .chart {
   flex: 0 0 auto;
-  min-height: 200px;
-  max-height: 42%;
+  min-height: 180px;
+  max-height: 34%;
   overflow: hidden;
 }
 
 /* Nested splits need more vertical room for readable multi-line labels. */
 .card[data-solo] .chart[data-deep-split] {
-  min-height: 260px;
-  max-height: 58%;
+  min-height: 220px;
+  max-height: 42%;
 }
 
 .card[data-solo] .tableRow {
   flex: 1 1 auto;
-  min-height: 120px;
+  min-height: 220px;
   display: flex;
   flex-direction: column;
 }
@@ -288,11 +288,20 @@
 /* Student list open — keep a usable plot region above the table. */
 .card[data-table-open] .chart {
   flex: 1 0 auto;
-  min-height: 180px;
+  min-height: 160px;
+  max-height: 45%;
 }
 
 .card[data-table-open] .chart[data-deep-split] {
-  min-height: 240px;
+  min-height: 200px;
+  max-height: 50%;
+}
+
+.card[data-table-open] .tableRow {
+  flex: 1 1 auto;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
 }
 
 .tableToggle {

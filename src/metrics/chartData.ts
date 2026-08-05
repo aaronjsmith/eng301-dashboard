@@ -63,6 +63,8 @@ export interface ChartData {
   baseline?: { label: string; value: number; formatted: string };
   /** Gap-metric alert threshold (diverging chart's dashed ±lines). */
   threshold?: number;
+  /** Which group is ahead on the left (negative) vs right (positive) of zero. */
+  gapPoles?: { negative: string; positive: string };
   matrix?: { rowLabels: string[]; colLabels: string[]; cells: HeatCell[][] };
   status: MarkStatus;
   n: number;
@@ -431,6 +433,7 @@ export function buildChartData(config: ModuleConfig, ctx: ChartDataContext): Cha
     stacks,
     baseline: computeBaseline(config, population, ctx, points),
     threshold: def.gapThreshold,
+    gapPoles: def.gapPoles,
     matrix,
     status: heroSuppressed ? 'ok' : statusFor(config.metric, heroValue),
     n: population.length,

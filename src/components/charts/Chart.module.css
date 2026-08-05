@@ -82,6 +82,30 @@
   color: var(--text-muted);
 }
 
+.gapPoles {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.gapPoleNeg,
+.gapPolePos {
+  min-width: 0;
+}
+
+.gapPoleNeg {
+  text-align: left;
+}
+
+.gapPolePos {
+  text-align: right;
+}
+
 /* Same colors as the student-list flag rows (DataTable). */
 .flagLegend {
   display: flex;

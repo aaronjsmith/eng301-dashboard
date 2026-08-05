@@ -35,7 +35,7 @@
 }
 
 .scroller {
-  max-height: 190px;
+  max-height: 280px;
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

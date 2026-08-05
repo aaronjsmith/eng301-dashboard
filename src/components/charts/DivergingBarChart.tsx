@@ -195,6 +195,12 @@ export function DivergingBarChart({ data, size }: DivergingBarChartProps) {
           </div>
         )}
       </div>
+      {size !== 'S' && data.gapPoles && (
+        <div className={styles.gapPoles} aria-hidden="true">
+          <span className={styles.gapPoleNeg}>← {data.gapPoles.negative}</span>
+          <span className={styles.gapPolePos}>{data.gapPoles.positive} →</span>
+        </div>
+      )}
     </div>
   );
 }

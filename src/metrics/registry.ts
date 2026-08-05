@@ -41,6 +41,11 @@ export interface MetricDef {
   target?: { value: number; label: string; direction: 'atLeast' | 'atMost' | 'within' };
   /** Gap alert threshold (|value| >) for gap metrics. */
   gapThreshold?: number;
+  /**
+   * Pole labels for diverging gap charts: which group is ahead on the
+   * negative (left) vs positive (right) side of zero.
+   */
+  gapPoles?: { negative: string; positive: string };
   allowedBreakdowns: (Dimension | 'none')[];
   defaultChart: ChartType;
   /** Unused in ENG201-only builds; kept for type/API stability. */
@@ -153,6 +158,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: (rows) => genderScoreGap(rows)?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
+    gapPoles: { negative: 'Men higher', positive: 'Women higher' },
     allowedBreakdowns: ['none', 'professor', 'course', 'session', 'year', 'major', 'ageBand'],
     defaultChart: 'divergingBar',
   },
@@ -167,6 +173,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: (rows) => demographicPassGap(rows, 'firstGen')?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
+    gapPoles: { negative: 'Continuing higher', positive: 'First-gen higher' },
     allowedBreakdowns: ['none', 'course', 'session', 'year', 'professor', 'major'],
     defaultChart: 'divergingBar',
   },
@@ -181,6 +188,7 @@ export const METRICS: Record<MetricId, MetricDef> = {
     compute: (rows) => demographicPassGap(rows, 'pell')?.gap ?? null,
     format: signedPoints,
     gapThreshold: THRESHOLDS.equityGapMax,
+    gapPoles: { negative: 'Non-Pell higher', positive: 'Pell higher' },
     allowedBreakdowns: ['none', 'course', 'session', 'year', 'professor', 'major'],
     defaultChart: 'divergingBar',
   },

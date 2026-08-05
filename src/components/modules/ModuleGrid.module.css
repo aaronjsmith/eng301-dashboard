@@ -7,7 +7,7 @@
   /* FIXED row units — content must never grow a row. Charts size their SVGs
      to the measured region, so an auto row would feed back (transient
      tallness → taller SVG → row held tall, ratcheting on every resize/drag).
-     Unit + gap = 159; S spans 2 units (300), M 3 (459), L 4 (618); anything
+     Unit + gap = 159; S spans 2 units (300), M 3 (459), L 6 (936); anything
      that genuinely can't fit scrolls inside its card (.chart overflow valve).
      --row-unit is set inline from ROW_UNIT in rosterLayout.ts. */
   grid-auto-rows: var(--row-unit, 141px);

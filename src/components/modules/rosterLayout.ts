@@ -11,8 +11,8 @@ import type { GridSlot, SizeTier } from '../../types';
  */
 
 /** Grid units are HALF-columns × 141px rows so M can sit between S and L on
- * both axes. Tiers span (col units × row units): S=2×2, M=3×3, L=4×4 —
- * i.e. 1 / 1.5 / 2 card-columns wide and 300 / 459 / 618px tall
+ * both axes. Tiers span (col units × row units): S=2×2, M=3×3, L=4×6 —
+ * i.e. 1 / 1.5 / 2 card-columns wide and 300 / 459 / 936px tall
  * (k·ROW_UNIT + (k−1)·GRID_GAP). */
 export const ROW_UNIT = 141;
 export const GRID_GAP = 18;
@@ -41,7 +41,7 @@ export interface ResolveOpts {
 
 export function spanOf(size: SizeTier, cols: number): { w: number; h: number } {
   const w = size === 'S' ? 2 : Math.min(size === 'M' ? 3 : 4, cols);
-  const h = size === 'S' ? 2 : size === 'M' ? 3 : 4;
+  const h = size === 'S' ? 2 : size === 'M' ? 3 : 6;
   return { w, h };
 }
 

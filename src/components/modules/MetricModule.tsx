@@ -414,7 +414,7 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
           {tableOpen && (
             <DataTable
               data={data}
-              expanded={solo}
+              expanded={solo || (tableOpen && size === 'L')}
               selectedKey={drillKey}
               metric={config.metric}
               breakdown={sanitized.breakdown}

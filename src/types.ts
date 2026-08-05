@@ -122,7 +122,7 @@ export type ChartType =
   | 'heatmap'
   | 'divergingBar';
 
-/** FR3 — size tiers are semantic zoom: S 1×1, M 2×1, L 2×2 grid spans. */
+/** FR3 — size tiers are semantic zoom: S 1×1, M 2×1, L 2×3 grid spans. */
 export type SizeTier = 'S' | 'M' | 'L';
 
 export type CompareTo =
