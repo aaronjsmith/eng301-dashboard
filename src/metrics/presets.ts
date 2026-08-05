@@ -65,7 +65,7 @@ function buildPresets(scopeRows: StudentRow[]): PresetValue[] {
   const k3 = dfwRate(scopeRows);
   presets.push({
     id: 'K3',
-    label: 'DFW rate',
+    label: 'D/F/Withdraw rate',
     kind: 'kpi',
     metric: 'dfwRate',
     value: k3?.rate ?? null,
@@ -75,7 +75,7 @@ function buildPresets(scopeRows: StudentRow[]): PresetValue[] {
       : 'No students in this view',
     target: '≤ 15%',
     description:
-      'DFW means D, F, or Withdraw — share of students who did not finish with a C− or better. Goal: 15% or less.',
+      'Share of students who earned a D, F, or Withdraw — did not finish with a C− or better. Goal: 15% or less.',
     breach:
       k3 && k3.rate > THRESHOLDS.dfwRateMax
         ? { severity: 'notable', formattedDelta: signedPoints(k3.rate - THRESHOLDS.dfwRateMax) }

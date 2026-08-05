@@ -82,12 +82,12 @@ export const METRICS: Record<MetricId, MetricDef> = {
   },
   dfwRate: {
     id: 'dfwRate',
-    label: 'DFW rate',
+    label: 'D/F/Withdraw rate',
     kind: 'kpi',
     indicator: 'lagging',
     unit: 'percent',
     description:
-      'DFW means D, F, or Withdraw. Share of students who did not finish with a C− or better. Lower is better. Goal: 15% or less.',
+      'Share of students who earned a D, F, or Withdraw — did not finish with a C− or better. Lower is better. Goal: 15% or less.',
     compute: (rows) => dfwRate(rows)?.rate ?? null,
     format: percent1,
     target: {

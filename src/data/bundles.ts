@@ -73,7 +73,7 @@ export const BUNDLES: ModuleBundle[] = [
   {
     id: 'bundle-overview',
     label: 'Overview',
-    description: 'Big-picture view: pass rate, DFW, scores by term, and enrollment.',
+    description: 'Big-picture view: pass rate, D/F/Withdraw, scores by term, and enrollment.',
     modules: [
       {
         id: 'ov-pass',
@@ -87,7 +87,7 @@ export const BUNDLES: ModuleBundle[] = [
       },
       {
         id: 'ov-dfw',
-        title: 'DFW rate by session',
+        title: 'D/F/Withdraw rate by session',
         metric: 'dfwRate',
         chartType: 'bars',
         size: 'M',
