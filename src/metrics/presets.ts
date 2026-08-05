@@ -35,7 +35,7 @@ function buildPresets(scopeRows: StudentRow[]): PresetValue[] {
     detail: k1 ? `${k1.passed} of ${k1.n} students passed` : 'No students in this view',
     target: '≥ 85%',
     description:
-      'What share of students passed. Goal: at least 85%. Click to open a chart.',
+      'Pass rate measures what share of students finished with a C− or better. Higher is better. Goal: at least 85%. Click to open a chart.',
     breach:
       k1 && k1.rate < THRESHOLDS.passRateTarget
         ? { severity: 'notable', formattedDelta: signedPoints(k1.rate - THRESHOLDS.passRateTarget) }
@@ -54,7 +54,7 @@ function buildPresets(scopeRows: StudentRow[]): PresetValue[] {
     detail: 'Average numeric score for students in this view',
     target: '≥ 80 (B−)',
     description:
-      'Average score from 0 to 100. Goal: at least 80 (about a B−). Click to open a chart.',
+      'Average score is the mean grade from 0 to 100. Higher is better. Goal: at least 80 (about a B−). Click to open a chart.',
     breach:
       k2 !== null && k2 < THRESHOLDS.avgScoreTarget
         ? { severity: 'notable', formattedDelta: signedPoints(k2 - THRESHOLDS.avgScoreTarget) }
@@ -75,7 +75,7 @@ function buildPresets(scopeRows: StudentRow[]): PresetValue[] {
       : 'No students in this view',
     target: '≤ 15%',
     description:
-      'Share of students who earned a D, F, or Withdraw — did not finish with a C− or better. Goal: 15% or less.',
+      'D/F/Withdraw rate measures students who earned a D, F, or withdrew instead of finishing with a C− or better. Lower is better. Goal: 15% or less.',
     breach:
       k3 && k3.rate > THRESHOLDS.dfwRateMax
         ? { severity: 'notable', formattedDelta: signedPoints(k3.rate - THRESHOLDS.dfwRateMax) }
@@ -94,7 +94,7 @@ function buildPresets(scopeRows: StudentRow[]): PresetValue[] {
     detail: k4.map((s) => `${s.session.slice(0, 2)} ${s.n}`).join(' · '),
     target: 'Stable or growing',
     description:
-      'How many students are enrolled, split by term (Spring, Summer, Fall, Winter). Goal: stay steady or grow.',
+      'Enrollment counts how many students are in each term (Spring, Summer, Fall, Winter). Steady or growing is usually better.',
   });
 
   // R1 — gender performance gap, per professor (worst |gap| in scope)
@@ -117,7 +117,7 @@ function buildPresets(scopeRows: StudentRow[]): PresetValue[] {
       : 'Groups under 20 students are hidden for privacy',
     target: 'Gap ≤ 5 pts',
     description:
-      'Biggest gap between women’s and men’s average scores for any professor (tiny groups hidden). Goal: gap of 5 points or less.',
+      'Gender performance gap is the biggest difference between women’s and men’s average scores for any professor. Closer to zero is better. Goal: gap of 5 points or less.',
     breach:
       r1Worst && Math.abs(r1Worst.gap!.gap) > THRESHOLDS.equityGapMax
         ? { severity: 'critical', formattedDelta: signedPoints(r1Worst.gap!.gap) }
@@ -143,7 +143,7 @@ function buildPresets(scopeRows: StudentRow[]): PresetValue[] {
         : 'Not enough data in this view',
     target: 'Gap ≤ 5 pts',
     description:
-      'Pass-rate gaps for first-generation students and Pell Grant students vs everyone else. Shown to chairs and admins. Goal: gaps of 5 points or less.',
+      'First-gen / Pell pass gap compares pass rates for first-generation and Pell Grant students vs everyone else. Closer to zero is better. Goal: gaps of 5 points or less.',
     roles: ['chair', 'admin'],
     breach: r4Breached
       ? {
@@ -172,7 +172,7 @@ function buildPresets(scopeRows: StudentRow[]): PresetValue[] {
     detail: 'Full-time vs part-time pass rate',
     target: 'Gap ≤ 5 pts',
     description:
-      'Compares pass rates for full-time vs part-time students. Shown as an alert if the gap gets large. Goal: within 5 points.',
+      'Full-time vs part-time pass compares completion rates for those two groups. Closer to zero is better. Goal: within 5 points.',
     offPanel: true,
     breach:
       k5.gap !== null && Math.abs(k5.gap) > THRESHOLDS.equityGapMax
