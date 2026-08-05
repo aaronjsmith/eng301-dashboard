@@ -20,6 +20,8 @@ import { flagStudents } from './flags';
 import { metricDef, type MetricUnit } from './registry';
 import { formatUnit, percent1, tooFewStudentsLabel } from './format';
 import { THRESHOLDS } from './thresholds';
+import { breakdownChain } from './availability';
+import { encodeChartKey } from './chartSelection';
 
 /**
  * ModuleConfig + rows → everything a chart renders. All numbers come from the
@@ -268,20 +270,32 @@ export function buildChartData(config: ModuleConfig, ctx: ChartDataContext): Cha
       : heroSub(config, population),
   };
 
-  // Breakdown series
+  // Breakdown series (primary × optional then-by nest)
   let points: SeriesPoint[] = [];
-  if (config.breakdown !== 'none') {
-    points = [...groupBy(population, config.breakdown)].map(([key, rows]) => {
-      const value = def.compute(rows);
-      const s = suppress(def.unit, value, rows.length);
-      return {
-        key,
-        label: valueLabel(config.breakdown as Dimension, key),
-        ...s,
-        n: rows.length,
-        status: s.suppressed ? 'ok' : statusFor(config.metric, s.value),
-      };
-    });
+  const dims = breakdownChain(config);
+  if (dims.length > 0) {
+    const walk = (rows: StudentRow[], depth: number, keyParts: string[], labelParts: string[]) => {
+      if (depth >= dims.length) {
+        const value = def.compute(rows);
+        const s = suppress(def.unit, value, rows.length);
+        points.push({
+          key: encodeChartKey(keyParts),
+          label: labelParts.join(' · '),
+          ...s,
+          n: rows.length,
+          status: s.suppressed ? 'ok' : statusFor(config.metric, s.value),
+        });
+        return;
+      }
+      const dim = dims[depth];
+      for (const [key, group] of groupBy(rows, dim)) {
+        walk(group, depth + 1, [...keyParts, key], [
+          ...labelParts,
+          valueLabel(dim, key),
+        ]);
+      }
+    };
+    walk(population, 0, [], []);
     if (def.gapThreshold !== undefined) {
       // Gap metrics render ranked (design doc's Equity view).
       points.sort((a, b) => (b.value ?? -Infinity) - (a.value ?? -Infinity));
@@ -301,7 +315,8 @@ export function buildChartData(config: ModuleConfig, ctx: ChartDataContext): Cha
       suppressed: false,
       status: 'ok' as const,
     }));
-    if (config.breakdown === 'session') {
+    // Stacked bands only for a single session split (nested splits use bars).
+    if (dims.length === 1 && dims[0] === 'session') {
       stacks = [...groupBy(population, 'session')].map(([session, rows]) => ({
         label: session,
         bands: gradeBandShares(rows).map((b) => ({
@@ -317,15 +332,16 @@ export function buildChartData(config: ModuleConfig, ctx: ChartDataContext): Cha
     }
   }
 
-  // Heatmap matrix: course rows × breakdown columns (pass rate only)
+  // Heatmap matrix: course rows × breakdown columns (pass rate only).
+  // Nested splits stay on bars — heatmaps need a single column dimension.
   let matrix: ChartData['matrix'];
   if (
     config.chartType === 'heatmap' &&
     config.metric === 'passRate' &&
-    config.breakdown !== 'none' &&
-    config.breakdown !== 'course'
+    dims.length === 1 &&
+    dims[0] !== 'course'
   ) {
-    const dim = config.breakdown;
+    const dim = dims[0];
     const courses = dimensionValues(population, 'course');
     const cols = dimensionValues(population, dim);
     if (courses.length >= 2 && cols.length >= 1) {
@@ -367,7 +383,7 @@ export function buildChartData(config: ModuleConfig, ctx: ChartDataContext): Cha
 
     // No breakdown: show pass / failing / marginal as peer bars so the
     // footer colors also appear in the chart (counts → % of cohort).
-    if (config.breakdown === 'none' && population.length > 0 && !heroSuppressed) {
+    if (dims.length === 0 && population.length > 0 && !heroSuppressed) {
       const n = population.length;
       const passPct = heroValue;
       const failPct = (f.fail / n) * 100;

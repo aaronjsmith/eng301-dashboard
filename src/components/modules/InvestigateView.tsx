@@ -43,6 +43,7 @@ export function InvestigateView({ config, onPromote }: InvestigateViewProps) {
     onPromote({
       filters: mergedFilters,
       breakdown: dim,
+      thenBy: undefined,
       chartType: types[0],
       compareTo: 'median',
       investigate: undefined,

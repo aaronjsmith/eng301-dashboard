@@ -13,6 +13,7 @@ interface DataTableProps {
   selectedKey?: string | null;
   metric?: MetricId;
   breakdown?: Dimension | 'none';
+  thenBy?: Dimension[];
   onClearSelection?: () => void;
 }
 
@@ -92,6 +93,7 @@ export function DataTable({
   selectedKey = null,
   metric = 'passRate',
   breakdown = 'none',
+  thenBy = [],
   onClearSelection,
 }: DataTableProps) {
   const { role } = useRole();
@@ -126,7 +128,7 @@ export function DataTable({
     if (!data.tableRows) return [];
     const filtered = selectedKey
       ? data.tableRows.filter(({ row, flag }) =>
-          studentMatchesChartKey(row, flag, selectedKey, metric, breakdown),
+          studentMatchesChartKey(row, flag, selectedKey, metric, breakdown, thenBy),
         )
       : data.tableRows;
 
@@ -141,7 +143,7 @@ export function DataTable({
       const bv = b.row[key as keyof StudentRow];
       return compareValues(av as string | number, bv as string | number, dir);
     });
-  }, [data.tableRows, selectedKey, metric, breakdown, facultySort]);
+  }, [data.tableRows, selectedKey, metric, breakdown, thenBy, facultySort]);
 
   const allPoints: SeriesPoint[] = useMemo(() => {
     if (data.points.length > 0) return data.points;

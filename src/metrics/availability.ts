@@ -22,11 +22,12 @@ export interface AvailabilityInfo {
 }
 
 export function availableChartTypes(
-  config: Pick<ModuleConfig, 'metric' | 'breakdown'>,
+  config: Pick<ModuleConfig, 'metric' | 'breakdown' | 'thenBy'>,
   info: AvailabilityInfo,
 ): ChartType[] {
   const def = metricDef(config.metric);
-  const { breakdown } = config;
+  const dims = breakdownChain(config);
+  const breakdown = dims[0] ?? 'none';
 
   // Gap metrics: diverging bars only — the one form whose zero axis renders
   // negative gaps honestly (a plain bar would clamp them to a stub).
@@ -34,14 +35,17 @@ export function availableChartTypes(
 
   if (config.metric === 'gradeDist') {
     const types: ChartType[] = ['pie', 'bars'];
-    if (breakdown === 'session') types.push('area'); // stacked bands over time
+    if (dims.length === 1 && breakdown === 'session') types.push('area'); // stacked bands over time
     return types;
   }
 
   const types: ChartType[] = ['bars'];
-  if (breakdown !== 'none') {
-    if (breakdown === 'session' || breakdown === 'year') types.push('area'); // ordered axis
+  if (dims.length > 0) {
+    if (dims.length === 1 && (breakdown === 'session' || breakdown === 'year')) {
+      types.push('area'); // ordered axis
+    }
     if (
+      dims.length === 1 &&
       config.metric === 'passRate' &&
       breakdown !== 'course' &&
       info.courseCount >= 2
@@ -109,6 +113,16 @@ export function popupDimensions(role: Role): Dimension[] {
     .map((meta) => meta.id);
 }
 
+/** Max nested split dimensions (primary + then-bys). */
+export const MAX_BREAKDOWN_DEPTH = 3;
+
+/** Active split chain: primary breakdown followed by thenBy dims. */
+export function breakdownChain(config: Pick<ModuleConfig, 'breakdown' | 'thenBy'>): Dimension[] {
+  if (config.breakdown === 'none') return [];
+  const extra = (config.thenBy ?? []).filter((d, i, arr) => arr.indexOf(d) === i && d !== config.breakdown);
+  return [config.breakdown, ...extra].slice(0, MAX_BREAKDOWN_DEPTH);
+}
+
 /**
  * Render-time sanitization: a saved chair module previewed as faculty renders
  * without professor dimensions instead of corrupting the saved config. With
@@ -121,12 +135,28 @@ export function sanitizeConfigForRole(
   scopeRows?: StudentRow[],
 ): ModuleConfig {
   let next = config;
+  const allowed = availableBreakdowns(config.metric, role, scopeRows);
 
-  if (
-    config.breakdown !== 'none' &&
-    !availableBreakdowns(config.metric, role, scopeRows).includes(config.breakdown)
-  ) {
-    next = { ...next, breakdown: 'none' };
+  if (config.breakdown !== 'none' && !allowed.includes(config.breakdown)) {
+    next = { ...next, breakdown: 'none', thenBy: undefined };
+  }
+
+  if (next.breakdown === 'none') {
+    if (next.thenBy?.length) next = { ...next, thenBy: undefined };
+  } else if (next.thenBy?.length) {
+    const used = new Set<Dimension>([next.breakdown]);
+    const cleaned: Dimension[] = [];
+    for (const dim of next.thenBy) {
+      if (used.has(dim)) continue;
+      if (!allowed.includes(dim)) continue;
+      used.add(dim);
+      cleaned.push(dim);
+      if (cleaned.length >= MAX_BREAKDOWN_DEPTH - 1) break;
+    }
+    next = {
+      ...next,
+      thenBy: cleaned.length > 0 ? cleaned : undefined,
+    };
   }
 
   const blockedDims = (Object.keys(next.filters) as Dimension[]).filter((dim) => {

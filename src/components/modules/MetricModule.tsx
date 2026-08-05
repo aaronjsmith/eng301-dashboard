@@ -8,7 +8,9 @@ import {
   availableBreakdowns,
   availableChartTypes,
   availableCompareTos,
+  breakdownChain,
   effectiveChartType,
+  MAX_BREAKDOWN_DEPTH,
 } from '../../metrics/availability';
 import { activeFilterCount, DIMENSION_META } from '../../metrics/scope';
 import { GLOSSARY } from '../../metrics/glossary';
@@ -68,7 +70,7 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
 
   useEffect(() => {
     setDrillKey(null);
-  }, [config.metric, config.breakdown, config.filters, config.id]);
+  }, [config.metric, config.breakdown, config.thenBy, config.filters, config.id]);
 
   const courseCount = useMemo(
     () => new Set(scopeRows.map((r) => r.course)).size,
@@ -77,6 +79,48 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
   const chartTypes = availableChartTypes(sanitized, { courseCount });
   const chartType = effectiveChartType(sanitized, { courseCount });
   const breakdowns = availableBreakdowns(config.metric, role, scopeRows);
+  const activeSplits = breakdownChain(sanitized);
+  /** Cascading selects: one slot per active dim, plus an empty "then by" when room remains. */
+  const splitSlots: (Dimension | 'none')[] =
+    activeSplits.length === 0
+      ? ['none']
+      : activeSplits.length < MAX_BREAKDOWN_DEPTH
+        ? [...activeSplits, 'none']
+        : [...activeSplits];
+
+  const setSplitAt = (index: number, value: Dimension | 'none') => {
+    if (index === 0) {
+      if (value === 'none') {
+        patch({ breakdown: 'none', thenBy: undefined });
+        return;
+      }
+      const rest = activeSplits.slice(1).filter((d) => d !== value);
+      patch({ breakdown: value, thenBy: rest.length ? rest : undefined });
+      return;
+    }
+    const next = [...activeSplits];
+    if (value === 'none') {
+      next.splice(index);
+    } else {
+      next[index] = value;
+      // Drop later slots that collide with the new choice.
+      for (let i = next.length - 1; i > index; i--) {
+        if (next[i] === value) next.splice(i, 1);
+      }
+    }
+    const [primary, ...thenBy] = next;
+    if (!primary) {
+      patch({ breakdown: 'none', thenBy: undefined });
+      return;
+    }
+    patch({ breakdown: primary, thenBy: thenBy.length ? thenBy : undefined });
+  };
+
+  const optionsForSlot = (index: number): (Dimension | 'none')[] => {
+    const usedEarlier = new Set(activeSplits.slice(0, index));
+    return breakdowns.filter((d) => d === 'none' || !usedEarlier.has(d));
+  };
+
   const filterCount = activeFilterCount(sanitized.filters);
   const size = config.investigate ? 'L' : config.size;
   const isInvestigate = config.investigate !== undefined;
@@ -219,21 +263,25 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
               ))}
             </select>
           </label>
-          <label className={styles.control}>
-            <span className={styles.controlLabel}>Split by</span>
-            <select
-              className={styles.select}
-              value={sanitized.breakdown}
-              onChange={(e) => patch({ breakdown: e.target.value as Dimension | 'none' })}
-              aria-label="Break down by dimension"
-            >
-              {breakdowns.map((d) => (
-                <option key={d} value={d}>
-                  {d === 'none' ? 'None' : DIMENSION_META[d].label}
-                </option>
-              ))}
-            </select>
-          </label>
+          {splitSlots.map((value, index) => (
+            <label key={index} className={styles.control}>
+              <span className={styles.controlLabel}>
+                {index === 0 ? 'Split by' : 'Then by'}
+              </span>
+              <select
+                className={styles.select}
+                value={value}
+                onChange={(e) => setSplitAt(index, e.target.value as Dimension | 'none')}
+                aria-label={index === 0 ? 'Break down by dimension' : `Then by dimension ${index + 1}`}
+              >
+                {optionsForSlot(index).map((d) => (
+                  <option key={d} value={d}>
+                    {d === 'none' ? 'None' : DIMENSION_META[d].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
           {size === 'L' && chartTypes.length > 1 && (
             <div className={styles.chartTypes} role="group" aria-label="Chart type">
               {chartTypes.map((t) => (
@@ -286,6 +334,7 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
               selectedKey={drillKey}
               metric={config.metric}
               breakdown={sanitized.breakdown}
+              thenBy={sanitized.thenBy}
               onClearSelection={() => setDrillKey(null)}
             />
           )}

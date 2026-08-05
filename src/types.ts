@@ -165,6 +165,11 @@ export interface ModuleConfig {
   size: SizeTier;
   compareTo: CompareTo;
   breakdown: Dimension | 'none';
+  /**
+   * Extra splits after `breakdown` (cascading "then by"). Empty/omitted when
+   * unused. Chart marks become the cross-product of all active dimensions.
+   */
+  thenBy?: Dimension[];
   /** Module-local filters; compose on top of (never widen) the global scope, FR5. */
   filters: FilterState;
   /** Desired roster cell; undefined ⇒ auto-place. Only drops/remagnetize commit it. */
