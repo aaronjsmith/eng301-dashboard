@@ -405,8 +405,17 @@ export function MetricModule({ config, solo, onDragStart, dragging }: MetricModu
             className={styles.tableToggle}
             aria-expanded={tableOpen}
             onClick={() => {
-              if (tableOpen) setDrillKey(null);
-              patch({ showTable: !tableOpen });
+              // Solo cards keep the list open; only clear a chart drill.
+              if (solo) {
+                if (drillKey) setDrillKey(null);
+                return;
+              }
+              if (drillKey !== null) {
+                setDrillKey(null);
+                patch({ showTable: false });
+                return;
+              }
+              patch({ showTable: !config.showTable });
             }}
           >
             {tableOpen ? 'Hide student list' : 'Show student list'}

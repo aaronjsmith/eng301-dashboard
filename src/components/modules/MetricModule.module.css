@@ -3,40 +3,42 @@
   flex-direction: column;
   gap: 8px;
   height: 100%;
+  min-height: 0;
   padding: 12px 14px 12px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-top: 3px solid var(--accent-module);
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
-  overflow: visible;
+  /* Contain flex children so the student list can scroll inside the card
+     (Firefox otherwise collapses the table when % max-heights don't resolve). */
+  overflow: hidden;
 }
 
 .card[data-solo] {
-  overflow: hidden;
   min-height: 0;
 }
 
-/* Keep the chart on screen when the student list expands — never let the
-   table steal all remaining height. */
+/* Keep the chart on screen when the student list expands — flex share, not
+   percentage max-height (Firefox often treats % max-height as none/0 here). */
 .card[data-solo] .chart {
-  flex: 0 0 auto;
-  min-height: 180px;
-  max-height: 34%;
+  flex: 0 1 34%;
+  min-height: 160px;
   overflow: hidden;
 }
 
 /* Nested splits need more vertical room for readable multi-line labels. */
 .card[data-solo] .chart[data-deep-split] {
-  min-height: 220px;
-  max-height: 42%;
+  flex: 0 1 42%;
+  min-height: 200px;
 }
 
 .card[data-solo] .tableRow {
-  flex: 1 1 auto;
-  min-height: 220px;
+  flex: 1 1 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .card[data-dragging] {
@@ -277,7 +279,7 @@
 }
 
 .chart {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 140px;
   /* Safety valve for fixed grid rows: scrolls instead of clipping the axis
      in degenerate cases only (L with the data table open, extreme category
@@ -285,26 +287,33 @@
   overflow-y: auto;
 }
 
-/* Student list open — keep a usable plot region above the table. */
+/* Student list open — share height via flex, keep both panes scrollable. */
 .card[data-table-open] .chart {
-  flex: 1 0 auto;
-  min-height: 160px;
-  max-height: 45%;
+  flex: 1 1 40%;
+  min-height: 120px;
+  overflow: auto;
 }
 
 .card[data-table-open] .chart[data-deep-split] {
-  min-height: 200px;
-  max-height: 50%;
+  flex: 1 1 45%;
+  min-height: 160px;
 }
 
 .card[data-table-open] .tableRow {
-  flex: 1 1 auto;
-  min-height: 200px;
+  flex: 1 1 55%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.tableRow {
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .tableToggle {
+  flex-shrink: 0;
   padding: 4px 11px;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -377,6 +386,12 @@
   margin-top: auto;
   padding-top: 6px;
   border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.card[data-table-open] .footer {
+  /* Don't let margin:auto eat the student-list flex share (esp. Firefox). */
+  margin-top: 0;
 }
 
 .kicker {

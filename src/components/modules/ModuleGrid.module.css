@@ -28,7 +28,11 @@
 
 .cell {
   min-width: 0;
+  /* Firefox: grid items default to min-height:auto and won't shrink, which
+     collapses the student-list flex pane inside height-bounded cards. */
+  min-height: 0;
   position: relative;
+  overflow: hidden;
 }
 
 .grid[data-solo] .cell[data-solo-card] {
